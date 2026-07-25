@@ -1,0 +1,449 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .backButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-right: 1rem;
+  }
+  
+  .backButton:hover {
+    background: #f8fafc;
+    color: #3b82f6;
+  }
+  
+  .title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1e293b;
+    flex: 1;
+  }
+  
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .searchContainer {
+    position: relative;
+    flex: 1;
+    max-width: 500px;
+  }
+  
+  .searchInput {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    background: #f8fafc;
+    color: #1e293b;
+  }
+  
+  .searchIcon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 1rem;
+  }
+  
+  .sortButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .sortButton:hover {
+    background: #f8fafc;
+    color: #3b82f6;
+  }
+  
+  .bookingsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .bookingCard {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  
+  .bookingCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cardHeader {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  
+  .trainInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .trainIcon {
+    font-size: 1.5rem;
+    color: #3b82f6;
+  }
+  
+  .trainDetails {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .trainNumber {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1rem;
+  }
+  
+  .trainName {
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+  
+  .bookingStatus {
+    background: #22c55e;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .journeyDetails {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  
+  .stationContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .station {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 45%;
+  }
+  
+  .stationTime {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+  
+  .stationName {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin: 0.25rem 0;
+  }
+  
+  .stationDate {
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+  
+  .journeyLine {
+    display: flex;
+    align-items: center;
+    width: 10%;
+  }
+  
+  .dot {
+    width: 10px;
+    height: 10px;
+    background: #3b82f6;
+    border-radius: 50%;
+  }
+  
+  .line {
+    height: 2px;
+    background: #3b82f6;
+    flex: 1;
+  }
+  
+  .bookingDetails {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  
+  .detailItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .detailIcon {
+    color: #3b82f6;
+    font-size: 1rem;
+  }
+  
+  .detailLabel {
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+  
+  .detailValue {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.9rem;
+  }
+  
+  .actionsContainer {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .actionButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .viewButton {
+    background: #3b82f6;
+    color: white;
+    border: none;
+  }
+  
+  .viewButton:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+  }
+  
+  .actionButton:not(.viewButton) {
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .actionButton:not(.viewButton):hover {
+    background: #f8fafc;
+    color: #3b82f6;
+    transform: translateY(-2px);
+  }
+  
+  .loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    gap: 1.5rem;
+  }
+  
+  .spinner {
+    font-size: 2rem;
+    color: #3b82f6;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  
+  .errorIcon {
+    font-size: 3rem;
+    color: #ef4444;
+  }
+  
+  .goBackButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+  }
+  
+  .goBackButton:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+  }
+  
+  .emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+    text-align: center;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .emptyIcon {
+    font-size: 3rem;
+    color: #94a3b8;
+    margin-bottom: 1.5rem;
+  }
+  
+  .bookNowButton {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1.5rem;
+  }
+  
+  .bookNowButton:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .backButton {
+      margin-right: 0;
+    }
+    
+    .stationContainer {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .station {
+      width: 100%;
+      align-items: center;
+    }
+    
+    .journeyLine {
+      width: 100%;
+      margin: 0.5rem 0;
+    }
+    
+    .dot {
+      display: none;
+    }
+    
+    .bookingDetails {
+      grid-template-columns: 1fr;
+    }
+    
+    .actionsContainer {
+      justify-content: center;
+    }
+  }
+
+  .cancelButton {
+    background-color: #ef4444;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .cancelButton:hover {
+    background-color: #dc2626;
+  }
+  
+  .cancelButton:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
+  
+  .actionButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }

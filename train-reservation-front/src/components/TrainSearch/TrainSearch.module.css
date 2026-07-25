@@ -1,0 +1,817 @@
+/* Base Variables and Styles */
+:root {
+  --primary: #3498db;
+  --primary-dark: #2980b9;
+  --secondary: #2c3e50;
+  --success: #27ae60;
+  --danger: #e74c3c;
+  --gray: #7f8c8d;
+  --light-gray: #bdc3c7;
+  --lighter-gray: #f8f9fa;
+  --border-color: #eee;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  --hover-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  --primary-gradient: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  --border-radius: 12px;
+  --card-padding: 20px;
+  --transition: all 0.3s ease;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+}
+
+/* Loading and Error States */
+.loadingContainer, .errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  width: 100%;
+}
+
+.loading, .error {
+  padding: 20px;
+  text-align: center;
+  border-radius: var(--border-radius);
+  background-color: white;
+  box-shadow: var(--shadow);
+}
+
+.loading {
+  color: #3498db;
+  animation: pulse 1.5s infinite;
+}
+
+.error {
+  color: var(--danger);
+  border-left: 4px solid var(--danger);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Left Section */
+.leftSection {
+  flex: 1;
+  background: white;
+  padding: var(--card-padding);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  transition: var(--transition);
+}
+
+.searchHeader {
+  margin-bottom: 25px;
+}
+
+.heading {
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  color: #3498db;
+}
+
+.route {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 15px;
+  background: var(--lighter-gray);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.station {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stationIcon {
+  color: #3498db;
+  font-size: 18px;
+}
+
+.stationCode {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.stationName {
+  color: var(--gray);
+  font-size: 14px;
+  margin-left: 5px;
+}
+
+.directionArrow {
+  text-align: center;
+  color: #3498db;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.journeyDate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.calendarIcon {
+  color: #3498db;
+}
+
+.searchBtn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.searchBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.searchIcon {
+  font-size: 14px;
+}
+
+/* Date Selector */
+.dateSelectorContainer {
+  margin: 25px 0;
+}
+
+.sectionTitle {
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateSelector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.dateSelector::-webkit-scrollbar {
+  height: 4px;
+}
+
+.dateSelector::-webkit-scrollbar-thumb {
+  background-color: var(--light-gray);
+  border-radius: 4px;
+}
+
+.arrow {
+  background: var(--lighter-gray);
+  border: none;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gray);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.arrow:hover {
+  background: #3498db;
+  color: white;
+}
+
+.date {
+  flex: 1;
+  min-width: 60px;
+  text-align: center;
+  padding: 10px 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+}
+
+.date:hover {
+  background: var(--lighter-gray);
+  transform: translateY(-2px);
+}
+
+.activeDate {
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  color: white;
+  font-weight: 500;
+  border-color: transparent;
+}
+
+.dateDay {
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.dateNumber {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dateMonth {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* Login Status Styles */
+.loginStatus {
+  background-color: white;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+
+.statusInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
+.loggedInStatus {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--success);
+}
+
+.statusIcon {
+  font-size: 20px;
+}
+
+.loggedOutStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--danger);
+  text-align: center;
+}
+
+.loginBtn {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.loginBtn:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+/* Travel Tips */
+.travelTips {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.infoText {
+  font-size: 14px;
+  color: var(--gray);
+  line-height: 1.6;
+}
+
+/* Right Section */
+.rightSection {
+  flex: 2;
+  padding: var(--card-padding);
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.resultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.availableTrains {
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trainCount {
+  font-size: 14px;
+  color: var(--gray);
+  font-weight: normal;
+}
+
+.sortFilter {
+  display: flex;
+  gap: 10px;
+}
+
+.sortDropdown {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  color: #2c3e50;
+}
+
+.sortDropdown:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+/* Train Cards */
+.trainCard {
+  background: white;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: var(--transition);
+  border: 1px solid var(--border-color);
+}
+
+.trainCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--hover-shadow);
+}
+
+.trainHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: var(--lighter-gray);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.trainName {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.trainRating {
+  background: var(--success);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.systemBadge {
+  background: #3498db;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.trainDetails {
+  padding: 20px;
+}
+
+.timing {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.timeGroup {
+  text-align: center;
+  flex: 1;
+}
+
+.time {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.station {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 5px;
+}
+
+.date {
+  font-size: 12px;
+  color: var(--light-gray);
+}
+
+.durationContainer {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.durationLine {
+  flex: 1;
+  height: 1px;
+  background: #ddd;
+}
+
+.duration {
+  margin: 0 10px;
+  font-size: 14px;
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.clockIcon {
+  font-size: 12px;
+}
+
+.trainInfo {
+  margin-top: 15px;
+}
+
+.runDays {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  background: #e8f4fc;
+  color: #3498db;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.processingInfo {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trainFacilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.facility {
+  font-size: 12px;
+  background: var(--lighter-gray);
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: var(--gray);
+}
+
+/* Fare Section */
+.fareContainer {
+  border-top: 1px solid var(--border-color);
+  padding: 15px 20px;
+  background: #fbfcfd;
+}
+
+.fare {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.seatType {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid;
+  background: white;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.seatType:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.className {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.price {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.availability {
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.waitingList {
+  font-size: 12px;
+  color: #f39c12;
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.viewBtn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #3498db;
+  color: #3498db;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewBtn:hover {
+  background: #f0f7fd;
+  transform: translateY(-2px);
+}
+
+.bookBtn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  border: none;
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bookBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+.selectedFare {
+  position: relative;
+  border-width: 2px !important;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selectedIndicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: white;
+  border-radius: 50%;
+  padding: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.checkIcon {
+  color: var(--success);
+  font-size: 16px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 30px;
+  margin-bottom: 20px;
+}
+
+.pageBtn {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pageBtn:hover {
+  background: var(--lighter-gray);
+  transform: translateY(-2px);
+}
+
+.activePage {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+/* No Results */
+.noResults {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: var(--lighter-gray);
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.noResults h3 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.noResults p {
+  color: var(--gray);
+  margin-bottom: 20px;
+}
+
+/* Responsive Design */
+@media (min-width: 992px) {
+  .container {
+    flex-direction: row;
+    gap: 25px;
+    padding: 25px;
+  }
+  
+  .leftSection {
+    margin-bottom: 0;
+    max-width: 350px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row;
+    gap: 25px;
+    padding: 25px;
+  }
+  
+  .leftSection {
+    margin-bottom: 0;
+    max-width: 350px;
+  }
+  
+  .route {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .directionArrow {
+    transform: rotate(0deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .leftSection,
+  .rightSection {
+    padding: 15px;
+  }
+  
+  .timing {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .durationContainer {
+    width: 100%;
+    margin: 10px 0;
+  }
+  
+  .durationLine {
+    width: 40%;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .viewBtn, .bookBtn {
+    width: 100%;
+  }
+  
+  .trainHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .trainRating {
+    align-self: flex-start;
+  }
+  
+  .resultsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sortFilter {
+    width: 100%;
+  }
+  
+  .sortDropdown {
+    width: 100%;
+  }
+}

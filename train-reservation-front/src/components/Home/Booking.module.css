@@ -1,0 +1,661 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+.homepageContainer {
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar Styles */
+.navbar {
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 1rem 0;
+}
+
+.navContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.logoIcon {
+  font-size: 1.8rem;
+  color: #3b82f6;
+}
+
+.logoText {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.authButtons {
+  display: flex;
+  gap: 1rem;
+}
+
+.authIcon {
+  margin-right: 8px;
+}
+
+.authText {
+  display: inline-block;
+}
+
+.loginButton {
+  background: transparent;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.loginButton:hover {
+  background: #f0f7ff;
+}
+
+.signupButton {
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.signupButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Hero Section */
+.heroSection {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 2rem 1rem;
+  position: relative;
+}
+
+.heroContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.textContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  order: 2;
+}
+
+.subtitle {
+  color: #3b82f6;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: -1rem;
+}
+
+.mainTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.tagline {
+  font-size: 1rem;
+  color: #64748b;
+  max-width: 600px;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* Booking Card */
+.bookingCard {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+              0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.bookingForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+}
+
+.stationInput {
+  flex: 1;
+  position: relative;
+}
+
+.stationInput label {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.inputIcon {
+  margin-right: 8px;
+  color: #e74c3c;
+  font-size: 0.9rem;
+}
+
+.stationValue {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stationInfo {
+  flex: 1;
+}
+
+.stationCode {
+  color: #3b82f6;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.stationName {
+  color: #475569;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevronIcon {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  min-width: 16px;
+}
+
+.swapButton {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0 auto;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+  color: #3b82f6;
+  z-index: 2;
+  align-self: center;
+}
+
+.swapIcon {
+  font-size: 1rem;
+}
+
+.swapButton:hover {
+  background: #f1f5f9;
+  transform: scale(1.05);
+}
+
+.dropdown {
+  position: absolute;
+  background: white;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  margin-top: 0.25rem;
+}
+
+.dropdownItem {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dropdownItem:hover {
+  background: #f8fafc;
+}
+
+.dateGroup {
+  position: relative;
+}
+
+/* Date dropdown */
+.hiddenDateInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.dateContainer {
+  position: relative;
+}
+
+.dateDisplay {
+  cursor: pointer;
+}
+
+.dateGroup label {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.dateValue {
+  position: relative;
+}
+
+.dateInput {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+}
+
+.dateDisplay {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+}
+
+.dateDay {
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-right: 4px;
+}
+
+.dateRest {
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.ctaButton {
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.ctaButton:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.searchIcon {
+  font-size: 0.9rem;
+}
+
+/* Hero Image */
+.heroImage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  order: 1;
+  margin-bottom: 2rem;
+}
+
+.heroImg {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Features Section */
+.featuresSection {
+  max-width: 1400px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
+
+.featuresTitle {
+  text-align: center;
+  font-size: 1.8rem;
+  color: #1e293b;
+  margin-bottom: 3rem;
+  font-weight: 700;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  padding: 0 1rem;
+}
+
+.featureCard {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+}
+
+.featureIcon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.featureTitle {
+  font-size: 1.25rem;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.featureDescription {
+  color: #64748b;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* Responsive Design */
+@media (min-width: 480px) {
+  .heroSection {
+      padding: 3rem 1.5rem;
+  }
+  
+  .mainTitle {
+      font-size: 2.2rem;
+  }
+  
+  .inputGroup {
+      flex-direction: row;
+      gap: 1.5rem;
+  }
+  
+  .swapButton {
+      position: relative;
+      transform: rotate(0deg);
+      margin: 0;
+      align-self: flex-end;
+      margin-bottom: 1.8rem;
+  }
+  
+  .featuresGrid {
+      grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 640px) {
+  .authText {
+      display: inline-block;
+  }
+  
+  .loginButton,
+  .signupButton {
+      padding: 0.5rem 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .heroSection {
+      padding: 4rem 2rem;
+  }
+  
+  .heroContent {
+      flex-direction: row;
+      align-items: center;
+      gap: 3rem;
+  }
+  
+  .textContent {
+      order: 1;
+  }
+  
+  .heroImage {
+      order: 2;
+      margin-bottom: 0;
+  }
+  
+  .mainTitle {
+      font-size: 2.5rem;
+  }
+  
+  .tagline {
+      font-size: 1.1rem;
+  }
+  
+  .bookingCard {
+      padding: 2rem;
+  }
+  
+  .swapButton {
+      align-self: center;
+      margin-bottom: 0;
+      transform: translateY(-0.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .heroSection {
+      padding: 5rem 2rem;
+  }
+  
+  .mainTitle {
+      font-size: 3rem;
+  }
+  
+  .featuresTitle {
+      font-size: 2rem;
+  }
+  
+  .featuresGrid {
+      grid-template-columns: repeat(3, 1fr);
+      padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .heroSection {
+      padding: 6rem 2rem;
+  }
+  
+  .mainTitle {
+      font-size: 3.5rem;
+  }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 480px) {
+  .navContainer {
+      padding: 0 1rem;
+  }
+  
+  .logoText {
+      font-size: 1.25rem;
+  }
+  
+  .authButtons {
+      gap: 0.5rem;
+  }
+  
+  .authText {
+      display: none;
+  }
+  
+  .loginButton,
+  .signupButton {
+      padding: 0.5rem;
+      width: 40px;
+      height: 40px;
+      justify-content: center;
+      border-radius: 50%;
+  }
+  
+  .authIcon {
+      margin-right: 0;
+  }
+  
+  .stationName, 
+  .dateRest {
+      font-size: 0.8rem;
+  }
+  
+  .featuresTitle {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+  }
+}
+
+/* Add these styles to your Booking.module.css file */
+
+.userSection {
+  position: relative;
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.userButton:hover {
+  color: #0056b3;
+}
+
+.userIcon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+  color: #0056b3;
+}
+
+.userName {
+  margin-right: 0.5rem;
+}
+
+.dropdownIcon {
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+}
+
+.userDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 200px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background-color: transparent;
+  color: #333;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dropdownItem:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdownIcon {
+  margin-right: 0.75rem;
+  font-size: 1rem;
+}

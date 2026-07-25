@@ -1,0 +1,308 @@
+/* ScheduleList.module.css */
+.scheduleList {
+    padding: 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .header h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 2rem;
+  }
+  
+  .headerActions {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .addButton, .trainsButton {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .addButton {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+  
+  .trainsButton {
+    background: #059669;
+    color: white;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+  }
+  
+  .addButton:hover, .trainsButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  .tableContainer {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .table th {
+    background: #f8fafc;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+    color: #374151;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+  }
+  
+  .table tr:hover {
+    background: #f8fafc;
+  }
+  
+  .trainDetails {
+    min-width: 140px;
+  }
+  
+  .trainNumber {
+    font-size: 1.1rem;
+    color: #1f2937;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  
+  .trainName {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .rating {
+    color: #9ca3af;
+    font-size: 0.75rem;
+  }
+  
+  .routeSchedule {
+    min-width: 200px;
+  }
+  
+  .route {
+    margin-bottom: 0.5rem;
+  }
+  
+  .station {
+    margin-bottom: 0.25rem;
+  }
+  
+  .station strong {
+    display: block;
+    color: #1f2937;
+    font-size: 0.875rem;
+  }
+  
+  .station small {
+    color: #6b7280;
+    font-size: 0.75rem;
+  }
+  
+  .arrow {
+    text-align: center;
+    color: #3b82f6;
+    font-weight: bold;
+    margin: 0.25rem 0;
+  }
+  
+  .duration {
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  
+  .actionButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 120px;
+  }
+  
+  .processButton, .queueButton, .editButton, .metricsButton, .deleteButton {
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  
+  .processButton {
+    background: #10b981;
+    color: white;
+  }
+  
+  .processButton:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+  
+  .queueButton {
+    background: #f59e0b;
+    color: white;
+  }
+  
+  .editButton {
+    background: #f59e0b;
+    color: white;
+  }
+  
+  .metricsButton {
+    background: #6366f1;
+    color: white;
+  }
+  
+  .deleteButton {
+    background: #ef4444;
+    color: white;
+  }
+  
+  .processButton:hover:not(:disabled), .queueButton:hover, .editButton:hover, .metricsButton:hover, .deleteButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .noSchedules {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+  }
+  
+  .noSchedules h3 {
+    margin: 0 0 1rem 0;
+    color: #374151;
+    font-size: 1.5rem;
+  }
+  
+  .noSchedules p {
+    margin: 0 0 2rem 0;
+    font-size: 1.1rem;
+  }
+  
+  .emptyActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+  
+  .summary {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .summaryStats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .summaryStats > span {
+    color: #374151;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 4rem;
+    color: #6b7280;
+    font-size: 1.125rem;
+  }
+  
+  .error {
+    text-align: center;
+    padding: 4rem;
+    color: #ef4444;
+  }
+  
+  .error h3 {
+    margin: 0 0 1rem 0;
+    color: #dc2626;
+  }
+  
+  .error p {
+    margin: 0 0 1rem 0;
+    color: #6b7280;
+  }
+  
+  .retryButton {
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    margin-top: 1rem;
+    transition: all 0.2s;
+  }
+  
+  .retryButton:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .scheduleList {
+      padding: 1rem;
+    }
+    
+    .header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch;
+    }
+    
+    .headerActions {
+      justify-content: center;
+    }
+    
+    .table {
+      font-size: 0.875rem;
+    }
+    
+    .actionButtons {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }

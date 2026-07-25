@@ -1,0 +1,120 @@
+.couponForm {
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  .couponForm h2 {
+    margin-bottom: 2rem;
+    color: #333;
+  }
+  
+  .formGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .formGroup {
+    margin-bottom: 1rem;
+  }
+  
+  .formGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #444;
+  }
+  
+  .formGroup input,
+  .formGroup select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  
+  .codeInput {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .codeInput input {
+    flex: 1;
+  }
+  
+  .generateButton {
+    padding: 0.75rem;
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  
+  .generateButton:hover {
+    background-color: #c7d2fe;
+  }
+  
+  .radioGroup {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  .radioGroup label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  
+  .formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  
+  .submitButton {
+    padding: 0.75rem 1.5rem;
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .submitButton:hover {
+    background-color: #4338ca;
+  }
+  
+  .cancelButton {
+    padding: 0.75rem 1.5rem;
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .cancelButton:hover {
+    background-color: #e5e7eb;
+  }
+  
+  @media (max-width: 768px) {
+    .formGrid {
+      grid-template-columns: 1fr;
+    }
+  }

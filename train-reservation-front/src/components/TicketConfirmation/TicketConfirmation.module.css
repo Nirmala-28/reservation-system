@@ -1,0 +1,459 @@
+/* Base Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f5f7fa;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 100vh;
+}
+
+/* Loading State */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.spinner {
+  font-size: 50px;
+  color: #3498db;
+  animation: spin 1.5s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  text-align: center;
+  padding: 20px;
+}
+
+.errorIcon {
+  font-size: 60px;
+  color: #e74c3c;
+  margin-bottom: 20px;
+}
+
+.returnButton {
+  padding: 12px 25px;
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+.returnButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+/* Success Header */
+.successHeader {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-top: 20px;
+}
+
+.successIcon {
+  font-size: 60px;
+  color: #27ae60;
+  margin-bottom: 15px;
+}
+
+.successTitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.successSubtitle {
+  font-size: 16px;
+  color: #7f8c8d;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Ticket Card */
+.ticketCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 30px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ticketCard:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Ticket Header */
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #3498db, #2c3e50);
+  color: white;
+}
+
+.trainInfo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.trainInfo h2 {
+  font-size: 20px;
+  margin: 0 0 10px 0;
+}
+
+.icon {
+  font-size: 24px;
+}
+
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.time {
+  font-weight: 600;
+  display: block;
+}
+
+.date {
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+  margin: 5px 0;
+}
+
+.station {
+  font-weight: 500;
+  display: block;
+}
+
+.duration {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  margin: 0 10px;
+  text-align: center;
+}
+
+.ticketStatus {
+  text-align: right;
+}
+
+.statusBadge {
+  display: inline-block;
+  background: #27ae60;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.classInfo {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Ticket Body */
+.ticketBody {
+  display: flex;
+  padding: 20px;
+}
+
+.detailsSection {
+  flex: 1;
+  padding-right: 20px;
+}
+
+.detailsRow {
+  margin-bottom: 25px;
+}
+
+.detailsRow h3 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.passengerInfo, .bookingInfo {
+  margin-bottom: 10px;
+}
+
+.passenger {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.passenger:last-child {
+  border-bottom: none;
+}
+
+.passengerInfo p,
+.bookingInfo p {
+  margin: 8px 0;
+  font-size: 15px;
+}
+
+.paymentSummary {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.fareBreakdown {
+  padding: 10px 0;
+}
+
+.fareRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #7f8c8d;
+}
+
+.divider {
+  height: 1px;
+  background: #eee;
+  margin: 15px 0;
+}
+
+.totalRow {
+  font-size: 17px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-top: 10px;
+}
+
+.totalAmount {
+  color: #e74c3c;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* QR Section */
+.qrSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 200px;
+}
+
+.qrContainer {
+  text-align: center;
+  padding: 15px;
+  border: 1px dashed #3498db;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.qrContainer:hover {
+  border-color: #2980b9;
+  background-color: #f8f9fa;
+}
+
+.qrPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 150px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.qrIcon {
+  font-size: 60px;
+  color: #3498db;
+  margin-bottom: 10px;
+}
+
+.qrImage {
+  width: 150px;
+  height: 150px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.qrContainer p {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin-top: 10px;
+}
+
+/* Notice */
+.notice {
+  padding: 15px 20px;
+  background: #fff8e1;
+  border-top: 1px solid #ffe0b2;
+  font-size: 14px;
+  color: #5d4037;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.printButton,
+.downloadButton,
+.bookAgainButton {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.printButton {
+  background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+  color: white;
+}
+
+.printButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+.downloadButton {
+  background: #27ae60;
+  color: white;
+}
+
+.downloadButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+}
+
+.bookAgainButton {
+  background: #f39c12;
+  color: white;
+}
+
+.bookAgainButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ticketHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .ticketStatus {
+    text-align: left;
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .ticketBody {
+    flex-direction: column;
+  }
+  
+  .detailsSection {
+    padding-right: 0;
+    margin-bottom: 20px;
+  }
+  
+  .successTitle {
+    font-size: 24px;
+  }
+  
+  .successIcon {
+    font-size: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .actionButtons {
+    grid-template-columns: 1fr;
+  }
+  
+  .ticketHeader {
+    padding: 15px;
+  }
+  
+  .ticketBody {
+    padding: 15px;
+  }
+  
+  .trainInfo {
+    gap: 10px;
+  }
+  
+  .trainInfo h2 {
+    font-size: 18px;
+  }
+  
+  .timeline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .duration {
+    margin: 10px 0;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .successTitle {
+    font-size: 22px;
+  }
+}

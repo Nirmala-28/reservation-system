@@ -1,0 +1,294 @@
+/* TrainList.module.css - Updated for Enhanced Train List */
+.trainList {
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h2 {
+  margin: 0;
+  color: #1f2937;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.addButton, .availabilityButton {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.addButton {
+  background: #2563eb;
+  color: white;
+}
+
+.availabilityButton {
+  background: #059669;
+  color: white;
+}
+
+.addButton:hover, .availabilityButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.retryButton {
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.table th {
+  background: #f8fafc;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.table tr:hover {
+  background: #f8fafc;
+}
+
+.trainDetails {
+  min-width: 150px;
+}
+
+.trainNumber {
+  font-size: 1.1rem;
+  color: #1f2937;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.trainName {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.createdDate {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.typeCapacity {
+  min-width: 120px;
+}
+
+.typeTag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.capacity {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.facilitiesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-width: 200px;
+}
+
+.facilityTag {
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+.moreFacilities {
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.noFacilities {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.statusContainer {
+  min-width: 80px;
+}
+
+.statusTag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.statusTag.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.statusTag.inactive {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.editButton, .scheduleButton, .deleteButton {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.editButton {
+  background: #f59e0b;
+  color: white;
+}
+
+.scheduleButton {
+  background: #10b981;
+  color: white;
+}
+
+.deleteButton {
+  background: #ef4444;
+  color: white;
+}
+
+.editButton:hover, .scheduleButton:hover, .deleteButton:hover:not(:disabled) {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.deleteButton:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.summary {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  text-align: center;
+  color: #374151;
+}
+
+.noTrains {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+
+.noTrains h3 {
+  margin: 0 0 1rem 0;
+  color: #374151;
+}
+
+.noTrains p {
+  margin: 0 0 2rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .trainList {
+    padding: 1rem;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .headerActions {
+    justify-content: center;
+  }
+  
+  .formRow {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .table {
+    font-size: 0.875rem;
+  }
+  
+  .actionButtons {
+    flex-direction: row;
+  }
+  
+  .quickFacilitiesGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .formActions {
+    flex-direction: column;
+  }
+  
+  .submitButton, .cancelButton {
+    width: 100%;
+  }
+}

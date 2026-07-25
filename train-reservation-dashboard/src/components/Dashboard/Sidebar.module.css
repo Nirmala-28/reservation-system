@@ -1,0 +1,336 @@
+/* Mobile Menu Button */
+.mobileMenuButton {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1001;
+  background-color: #1e293b;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hamburger {
+  width: 20px;
+  height: 2px;
+  background-color: white;
+  transition: 0.3s;
+}
+
+/* Mobile Overlay */
+.mobileOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: #1e293b;
+  color: white;
+  position: fixed;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  z-index: 1000;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+/* Header */
+.header {
+  padding: 1.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #334155;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.collapseButton {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.collapseButton:hover {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+/* Navigation */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.navLink {
+  padding: 0.75rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-height: 44px;
+  position: relative;
+}
+
+.navLink:hover {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+.navLink.active {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.navLink svg {
+  flex-shrink: 0;
+}
+
+.navLink span {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.collapsed .navLink span {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+.collapsed .navLink {
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+}
+
+/* Tooltip for collapsed state */
+.collapsed .navLink:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #1f2937;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-left: 0.5rem;
+  z-index: 1001;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Footer */
+.footer {
+  padding: 1rem;
+  border-top: 1px solid #334155;
+}
+
+.logoutButton {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 44px;
+}
+
+.logoutButton:hover {
+  background-color: #b91c1c;
+}
+
+.logoutButton svg {
+  flex-shrink: 0;
+}
+
+.collapsed .logoutButton span {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+.collapsed .logoutButton {
+  padding: 0.75rem 0.5rem;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .mobileMenuButton {
+    display: flex;
+  }
+
+  .sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.mobileOpen {
+    transform: translateX(0);
+  }
+
+  .mobileOverlay {
+    display: block;
+  }
+
+  .sidebar.mobileOpen ~ .mobileOverlay {
+    display: block;
+  }
+
+  .collapseButton {
+    display: none;
+  }
+
+  .sidebar.collapsed {
+    width: 280px;
+  }
+
+  .collapsed .navLink span,
+  .collapsed .logoutButton span {
+    opacity: 1;
+    width: auto;
+  }
+
+  .collapsed .navLink {
+    justify-content: flex-start;
+    padding: 0.75rem;
+  }
+
+  .collapsed .logoutButton {
+    padding: 0.75rem;
+  }
+
+  .collapsed .navLink:hover::after {
+    display: none;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 100vw;
+  }
+}
+
+/* Add these to your existing styles */
+.footer {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  padding: 1rem;
+}
+
+.copyright {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #888;
+  line-height: 1.4;
+}
+
+.collapsedCopyright {
+  font-size: 0.65rem;
+  padding: 0.5rem 0;
+}
+
+.separator {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.75rem 1rem;
+  position: relative;
+}
+
+.separator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+}
+
+/* Enhanced active state for scheduling link */
+.navLink.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-right: 3px solid #3b82f6;
+}
+
+/* Hover effect for better UX */
+.navLink:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+  transition: all 0.2s ease;
+}
+
+/* Special styling for train management section */
+.navLink[href*="/dashboard/trains"],
+.navLink[href*="/dashboard/train-availability"] {
+  position: relative;
+}
+
+.navLink[href*="/dashboard/trains"]::before,
+.navLink[href*="/dashboard/train-availability"]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.navLink[href*="/dashboard/trains"].active::before,
+.navLink[href*="/dashboard/train-availability"].active::before {
+  opacity: 1;
+}

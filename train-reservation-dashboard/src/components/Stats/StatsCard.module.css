@@ -1,0 +1,32 @@
+.card {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  .value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+  
+  .change {
+    font-size: 0.875rem;
+  }
+  
+  .positive {
+    color: #16a34a;
+  }
+  
+  .negative {
+    color: #dc2626;
+  }
