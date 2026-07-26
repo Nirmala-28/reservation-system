@@ -14,6 +14,7 @@ import CouponList from './components/Coupons/CouponList';
 import CouponForm from './components/Coupons/CouponForm';
 import BookingList from './components/Bookings/BookingList';
 import Stats from './components/Stats/StatsChart';
+import AlgorithmVisualizers from './components/Stats/AlgorithmVisualizers';
 import styles from './App.module.css';
 
 const PrivateRoute = ({ children }) => {
@@ -61,6 +62,7 @@ function App() {
               <Route path="coupons/edit/:id" element={<CouponForm />} />
               <Route path="bookings" element={<BookingList />} />
               <Route path="stats" element={<Stats />} />
+              <Route path="algorithms" element={<AlgorithmVisualizers />} />
               <Route index element={<Navigate to="trains" replace />} />
             </Route>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

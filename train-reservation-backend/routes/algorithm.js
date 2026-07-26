@@ -174,4 +174,74 @@ router.get('/config', (req, res) => {
   });
 });
 
+// Dijkstra Route Optimization API
+router.post('/dijkstra/solve', (req, res) => {
+  const DijkstraSolver = require('../utils/dijkstra');
+  const { startNode, endNode, edges = [] } = req.body;
+
+  if (!startNode || !endNode) {
+    return res.status(400).json({ success: false, message: 'startNode and endNode are required' });
+  }
+
+  const solver = new DijkstraSolver();
+  edges.forEach(edge => {
+    solver.addEdge(edge.source, edge.destination, parseFloat(edge.weight));
+  });
+
+  const result = solver.findShortestPath(startNode, endNode);
+  res.json({
+    success: true,
+    algorithm: 'Dijkstra Route Optimization',
+    startNode,
+    endNode,
+    path: result.path,
+    duration: result.duration
+  });
+});
+
+// Priority Queue Simulator API
+router.post('/priority-queue/simulate', (req, res) => {
+  const PriorityQueue = require('../utils/priorityQueue');
+  const { passengers = [], action = 'simulate' } = req.body;
+
+  const pq = new PriorityQueue();
+  passengers.forEach(p => {
+    pq.enqueue(p.name, parseFloat(p.priority), p.timestamp || Date.now());
+  });
+
+  let promoted = null;
+  if (action === 'promote') {
+    promoted = pq.dequeue();
+  }
+
+  res.json({
+    success: true,
+    algorithm: 'Priority Queue Heap Waitlist',
+    queueState: pq.getRawData(),
+    promotedPassenger: promoted
+  });
+});
+
+// Segment Tree Seat Allocation API
+router.post('/segment-tree/query', (req, res) => {
+  const SegmentTree = require('../utils/segmentTree');
+  const { segments = 4, bookings = [], query = { start: 0, end: 1 } } = req.body;
+
+  const tree = new SegmentTree(parseInt(segments));
+  bookings.forEach(b => {
+    tree.bookSegment(parseInt(b.start), parseInt(b.end));
+  });
+
+  const isFree = tree.isSegmentFree(parseInt(query.start), parseInt(query.end));
+  
+  res.json({
+    success: true,
+    algorithm: 'Segment Tree Range Seat Allocator',
+    segments,
+    bookings,
+    query,
+    isAvailable: isFree
+  });
+});
+
 module.exports = router;

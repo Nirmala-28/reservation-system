@@ -384,14 +384,50 @@ const StatsChart = () => {
       )}
 
       <div className={styles.charts}>
-        {hasValidChartData('popularTrains') && (
-          <div className={styles.chartContainer}>
-            <h3>Most Popular Trains</h3>
-            <div className={styles.chartWrapper}>
-              <Pie data={getChartData('popularTrains')} options={pieOptions} />
+        {hasValidChartData('popularTrains') && (() => {
+          const trainData = stats.popularTrains;
+          const maxCount = Math.max(...(trainData.data || [1]));
+          const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+          const rankEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+          return (
+            <div className={styles.popularTrainsContainer}>
+              <div className={styles.popularTrainsHeader}>
+                <h3>🚂 Most Popular Trains</h3>
+                <span className={styles.popularTrainsBadge}>{trainData.labels.length} trains</span>
+              </div>
+              <div className={styles.trainRankList}>
+                {trainData.labels.map((label, i) => {
+                  const count = trainData.data[i] || 0;
+                  const pct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
+                  // Split "TRN591 - Himalayan Express" into number and name
+                  const parts = label.split(' - ');
+                  const trainNumber = parts[0] || label;
+                  const trainName = parts.slice(1).join(' - ') || '';
+                  return (
+                    <div key={i} className={styles.trainRankItem}>
+                      <div className={styles.trainRankLeft}>
+                        <span className={styles.rankBadge}>{rankEmojis[i] || `#${i + 1}`}</span>
+                        <div className={styles.trainInfo}>
+                          <span className={styles.trainNumber}>{trainNumber}</span>
+                          {trainName && <span className={styles.trainName}>{trainName}</span>}
+                        </div>
+                      </div>
+                      <div className={styles.trainRankRight}>
+                        <div className={styles.trainBarWrapper}>
+                          <div
+                            className={styles.trainBar}
+                            style={{ width: `${pct}%`, backgroundColor: colors[i % colors.length] }}
+                          />
+                        </div>
+                        <span className={styles.trainCount}>{count} bookings</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
         
         {/* Show message when no charts have valid data */}
         {!hasValidChartData('revenue') && !hasValidChartData('bookings') && !hasValidChartData('popularTrains') && (

@@ -68,6 +68,22 @@ const bookingSchema = new mongoose.Schema({
     enum: ['Pending', 'Confirmed', 'Waiting', 'Cancelled'],
     default: 'Pending',
   },
+
+  // Priority Queue algorithm — waitlist management
+  waitlistPosition: {
+    type: Number,
+    default: null,
+  },
+  priorityScore: {
+    type: Number,
+    default: 1,  // Higher = gets promoted first. Senior (60+) gets +2, VIP gets +3
+  },
+
+  // Segment Tree algorithm — partial route seat tracking
+  segmentInfo: {
+    startStopIndex: { type: Number, default: 0 },
+    endStopIndex:   { type: Number, default: 1 },
+  },
   classInfo: {
     type: String,
     required: true
@@ -129,7 +145,17 @@ const bookingSchema = new mongoose.Schema({
     allocationTime: Date,
     waitTime: Number,
     timeSlotAllocated: String
-  }
+  },
+
+  // Algorithm audit trail — stores which algorithm ran and its result
+  algorithmLog: [
+    {
+      algorithm: String,       // 'RoundRobin' | 'PriorityQueue' | 'SegmentTree' | 'Dijkstra'
+      action: String,          // 'seat_check' | 'slot_allocated' | 'promoted' | 'waitlisted'
+      result: String,          // human-readable outcome
+      timestamp: { type: Date, default: Date.now }
+    }
+  ]
 }, {
   timestamps: true
 });

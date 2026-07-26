@@ -13,6 +13,7 @@ const TrainSearch = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [trains, setTrains] = useState([]);
+  const [dijkstraData, setDijkstraData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const containerRef = useRef(null);
@@ -88,6 +89,11 @@ const TrainSearch = () => {
         if (data.success) {
           console.log(`Found ${data.count} trains using intelligent search`);
           setTrains(data.data);
+          if (data.dijkstra && data.dijkstra.found) {
+            setDijkstraData(data.dijkstra);
+          } else {
+            setDijkstraData(null);
+          }
         } else {
           setError('Failed to load train schedules');
         }
@@ -546,22 +552,83 @@ const TrainSearch = () => {
             );
           })
         ) : (
-          <motion.div 
-            className={styles.noResults}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <h3>No trains found for this route and date</h3>
-            <p>Try changing your search criteria or selecting a different date. Our intelligent booking system ensures fair allocation for all passengers.</p>
-            <motion.button 
-              className={styles.searchBtn}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/')}
-            >
-              Modify Search
-            </motion.button>
-          </motion.div>
+          <>
+            {dijkstraData ? (
+              <motion.div 
+                className={styles.dijkstraBanner}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '2rem', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', marginTop: '1rem', border: '1px solid #e2e8f0', borderLeft: '4px solid #3b82f6' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '1rem' }}>
+                  <div style={{ background: '#eff6ff', color: '#3b82f6', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                    <FaMapMarkerAlt />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem' }}>No direct trains found</h3>
+                    <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.95rem' }}>We found an optimal connecting route using Dijkstra's Algorithm ({dijkstraData.totalDurationMinutes} min total travel time)</p>
+                  </div>
+                </div>
+                
+                <div style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>Suggested Route</div>
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', fontSize: '1.1rem', fontWeight: '500', color: '#0f172a' }}>
+                    {dijkstraData.path.map((station, index) => (
+                      <React.Fragment key={index}>
+                        <div style={{ background: '#fff', padding: '0.4rem 0.8rem', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>{station}</div>
+                        {index < dijkstraData.path.length - 1 && (
+                          <div style={{ color: '#94a3b8' }}>→</div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {dijkstraData.hops.map((hop, index) => (
+                    <div key={index} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                      <div style={{ background: '#f1f5f9', padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '600', color: '#334155' }}>Leg {index + 1}</span>
+                        <span style={{ color: '#475569', fontSize: '0.9rem', fontWeight: '500' }}>{hop.trainNumber} - {hop.trainName}</span>
+                      </div>
+                      <div style={{ padding: '1rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem', background: '#fff' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Departs</span>
+                          <span style={{ color: '#0f172a', fontWeight: '500' }}>{hop.from} <span style={{ color: '#3b82f6' }}>{hop.departureTime}</span></span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Arrives</span>
+                          <span style={{ color: '#0f172a', fontWeight: '500' }}>{hop.to} <span style={{ color: '#3b82f6' }}>{hop.arrivalTime}</span></span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginLeft: 'auto', textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', fontWeight: '600' }}>Duration</span>
+                          <span style={{ color: '#0f172a', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><FaClock style={{ color: '#94a3b8' }}/> {hop.durationMinutes} min</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                className={styles.noResults}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <h3>No trains found for this route and date</h3>
+                <p>Try changing your search criteria or selecting a different date. Our intelligent booking system ensures fair allocation for all passengers.</p>
+                <motion.button 
+                  className={styles.searchBtn}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate('/')}
+                >
+                  Modify Search
+                </motion.button>
+              </motion.div>
+            )}
+          </>
         )}
         
         {trains.length > 0 && (

@@ -373,16 +373,26 @@ placeholder="4.5"
 </div>
 </div>
 
-{/* Round Robin Configuration */}
+{/* Algorithm Configuration */}
 <div className={styles.section}>
-<h3>🔄 Round Robin Configuration</h3>
-<div className={styles.algorithmCard}>
-<div className={styles.algorithmHeader}>
-<h4>Round Robin Algorithm</h4>
-<span className={styles.algorithmBadge}>Active</span>
-</div>
-<p><strong>Description:</strong> Fair time slot allocation with equal time quantum for all bookings</p>
-<p><strong>Best for:</strong> Balanced resource allocation and ensuring no booking is starved</p>
+  <h3>🧠 Algorithm Configuration</h3>
+  
+  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '5px' }}>
+    <span className={styles.algorithmBadge} style={{ background: '#e0f2fe', color: '#0369a1' }}>🌲 Segment Tree (Active)</span>
+    <span className={styles.algorithmBadge} style={{ background: '#fce7f3', color: '#be185d' }}>👑 Priority Queue (Active)</span>
+    <span className={styles.algorithmBadge} style={{ background: '#dcfce7', color: '#15803d' }}>📍 Dijkstra (Active)</span>
+  </div>
+  <p style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '15px', fontStyle: 'italic' }}>
+    Note: The above 3 algorithms are zero-configuration and run automatically. Round Robin requires a manual time quantum below.
+  </p>
+
+  <div className={styles.algorithmCard}>
+    <div className={styles.algorithmHeader}>
+      <h4>Round Robin Scheduling</h4>
+      <span className={styles.algorithmBadge}>Active</span>
+    </div>
+    <p><strong>Description:</strong> Fair time slot allocation with equal time quantum for all bookings</p>
+    <p><strong>Best for:</strong> Balanced resource allocation and ensuring no booking is starved</p>
  
 
 <div className={styles.formGroup}>

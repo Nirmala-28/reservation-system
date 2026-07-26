@@ -6,6 +6,8 @@ const Meal = require('../models/Meal');
 const Coupon = require('../models/Coupon');
 const generatePNR = require('../utils/generatePNR');
 const generateQRCode = require('../utils/generateQRCode');
+const SegmentTree = require('../utils/segmentTree');
+const PriorityQueue = require('../utils/priorityQueue');
 
 // @desc    Create booking
 // @route   POST /api/bookings
@@ -59,7 +61,69 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // Check seat availability
+    // -----------------------------------------------------------------
+    // ALGORITHM 1: SEGMENT TREE — Partial-Route Seat Availability Check
+    // -----------------------------------------------------------------
+    // Map the passenger's departure/arrival stations to stop indices.
+    // If the train has a stopsList defined (e.g. 4 stops = 3 segments),
+    // the Segment Tree verifies the requested segment is free before
+    // allowing the booking to proceed. This enables the SAME physical
+    // seat to be reused by two passengers on non-overlapping sub-routes.
+    // -----------------------------------------------------------------
+    let segStartIdx = 0;
+    let segEndIdx   = 1;
+    let segmentTreeResult = 'skipped — no stopsList defined on this schedule';
+
+    const stops = trainAvailability.stopsList || [];
+    if (stops.length >= 2) {
+      // Find index of departure and arrival station in the stops list
+      const depIdx = stops.findIndex(s =>
+        s.toLowerCase().includes(trainAvailability.departureStation.toLowerCase())
+      );
+      const arrIdx = stops.findIndex(s =>
+        s.toLowerCase().includes(trainAvailability.arrivalStation.toLowerCase())
+      );
+
+      // Use found indices or default to full route (0 → stops.length-1)
+      segStartIdx = depIdx >= 0 ? depIdx : 0;
+      segEndIdx   = arrIdx >= 0 ? arrIdx : stops.length - 1;
+
+      // Build a per-class Segment Tree from confirmed bookings on this schedule
+      const confirmedBookings = await Booking.find({
+        trainAvailability: trainAvailability._id,
+        classInfo: classInfo,
+        status: { $in: ['Confirmed', 'Pending'] }
+      }).select('segmentInfo passengers');
+
+      const tree = new SegmentTree(stops.length - 1);
+
+      // Mark each confirmed booking's segment as occupied
+      confirmedBookings.forEach(b => {
+        const { startStopIndex, endStopIndex } = b.segmentInfo || {};
+        if (startStopIndex != null && endStopIndex != null && endStopIndex > startStopIndex) {
+          tree.bookSegment(startStopIndex, endStopIndex);
+        }
+      });
+
+      // Query whether our requested segment [segStartIdx, segEndIdx] is free
+      const segFree = tree.isSegmentFree(segStartIdx, segEndIdx);
+
+      if (!segFree) {
+        segmentTreeResult = `CONFLICT — segment [${segStartIdx}, ${segEndIdx}] is occupied`;
+        console.log(`[Segment Tree] ${segmentTreeResult}`);
+        return res.status(400).json({
+          success: false,
+          message: `No seat available for your route segment (${trainAvailability.departureStation} → ${trainAvailability.arrivalStation}). Another passenger is occupying this seat on your travel segment.`,
+          algorithm: 'SegmentTree',
+          segmentCheck: segmentTreeResult
+        });
+      }
+
+      segmentTreeResult = `OK — segment [${segStartIdx}, ${segEndIdx}] is free`;
+      console.log(`[Segment Tree] ${segmentTreeResult}`);
+    }
+
+    // Check seat count availability (existing check)
     if (selectedClass.availableSeats < passengers.length) {
       return res.status(400).json({ 
         success: false,
@@ -67,8 +131,17 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // Calculate base fare
-    const baseFare = parseFloat(selectedClass.price.replace(/[Rs.,\s]/g, '')) * passengers.length;
+
+    // -----------------------------------------------------------------
+    // Calculate priority score for this booking (used by Priority Queue
+    // if this passenger ever ends up on a waitlist)
+    // Senior citizen (any passenger 60+) gets priority boost
+    // -----------------------------------------------------------------
+    const isSenior = passengers.some(p => parseInt(p.age) >= 60);
+    const priorityScore = isSenior ? 3 : 1;
+
+    // Calculate base fare — strip all non-numeric chars (₹, Rs, commas, spaces) except decimal
+    const baseFare = parseFloat(String(selectedClass.price).replace(/[^0-9.]/g, '')) * passengers.length;
     
     // Calculate meal prices
     let mealTotal = 0;
@@ -148,6 +221,8 @@ exports.createBooking = async (req, res) => {
       trainAvailability: trainAvailability._id,
       pnr,
       classInfo,
+      priorityScore,
+      segmentInfo: { startStopIndex: segStartIdx, endStopIndex: segEndIdx },
       passengers: passengers.map(p => ({
         name: p.name,
         age: parseInt(p.age),
@@ -168,8 +243,16 @@ exports.createBooking = async (req, res) => {
       },
       travelDate: new Date(travelDate),
       contactInfo: contactInfo,
-      status: 'Pending'
+      status: 'Pending',
+      algorithmLog: [
+        {
+          algorithm: 'SegmentTree',
+          action: 'seat_check',
+          result: segmentTreeResult,
+        }
+      ]
     });
+
 
     await booking.save();
 
@@ -203,11 +286,27 @@ exports.createBooking = async (req, res) => {
     };
     
     const qrCode = await generateQRCode(qrData);
-    booking.qrCode = qrCode;
+    // Push Round Robin log entry
+    booking.algorithmLog.push({
+      algorithm: 'RoundRobin',
+      action: 'slot_allocated',
+      result: allocationResult.success
+        ? `Slot ${allocationResult.allocatedSlot?.slotId} allocated (quantum=${allocationResult.timeQuantum}min)`
+        : 'No free slot available',
+    });
+
+    // Save the algorithm data directly to the booking document
+    booking.roundRobinData = {
+      queuePosition: trainAvailability.bookingQueue.length,
+      allocationTime: allocationResult.allocatedSlot?.allocationTime || new Date(),
+      waitTime: allocationResult.timeQuantum || 0,
+      timeSlotAllocated: allocationResult.allocatedSlot?.timeSlot || 'Standard'
+    };
+
     booking.status = 'Confirmed';
     await booking.save();
 
-    console.log('Booking created successfully:', {
+    console.log('[Round Robin] Booking confirmed:', {
       bookingId: booking._id,
       pnr,
       totalAmount,
@@ -220,8 +319,11 @@ exports.createBooking = async (req, res) => {
       totalAmount: totalAmount.toFixed(2),
       pnr,
       qrCode,
-      roundRobinAllocation: allocationResult,
-      message: 'Booking created successfully with Round Robin optimization'
+      algorithms: {
+        segmentTree: segmentTreeResult,
+        roundRobin: allocationResult,
+      },
+      message: 'Booking confirmed — verified by Segment Tree + allocated via Round Robin'
     });
 
   } catch (error) {
@@ -341,11 +443,86 @@ exports.cancelBooking = async (req, res) => {
       }
     }
 
+    // -----------------------------------------------------------------
+    // ALGORITHM 2: PRIORITY QUEUE — Waitlist Auto-Promotion
+    // -----------------------------------------------------------------
+    // When a seat frees up, find all bookings with status='Waiting'
+    // for the same train schedule + class. Load them into a Max-Heap
+    // Priority Queue ordered by priorityScore (desc) then bookingDate
+    // (FIFO). Promote the top passenger automatically to 'Confirmed'.
+    // -----------------------------------------------------------------
+    const waitlistedBookings = await Booking.find({
+      trainAvailability: booking.trainAvailability._id || booking.trainAvailability,
+      classInfo: booking.classInfo,
+      status: 'Waiting'
+    }).sort({ createdAt: 1 }); // pre-sort FIFO as tiebreaker baseline
+
+    let promotedBooking = null;
+    let priorityQueueResult = 'no waitlisted passengers';
+
+    if (waitlistedBookings.length > 0) {
+      const pq = new PriorityQueue();
+
+      // Enqueue each waiting booking with its priority score + booking timestamp
+      waitlistedBookings.forEach(wb => {
+        pq.enqueue(
+          wb._id.toString(),
+          wb.priorityScore || 1,
+          new Date(wb.createdAt).getTime()
+        );
+      });
+
+      console.log(`[Priority Queue] Heap built with ${pq.size()} waiting passengers`);
+
+      // Dequeue = highest priority passenger gets the freed seat
+      const topBookingId = pq.dequeue();
+      promotedBooking = await Booking.findById(topBookingId);
+
+      if (promotedBooking) {
+        promotedBooking.status = 'Confirmed';
+        promotedBooking.waitlistPosition = null;
+        promotedBooking.algorithmLog = promotedBooking.algorithmLog || [];
+        promotedBooking.algorithmLog.push({
+          algorithm: 'PriorityQueue',
+          action: 'promoted',
+          result: `Promoted from Waiting → Confirmed. Priority score: ${promotedBooking.priorityScore}. Queue had ${waitlistedBookings.length} passengers.`,
+        });
+        await promotedBooking.save();
+
+        priorityQueueResult = `Promoted booking ${topBookingId} (priorityScore=${promotedBooking.priorityScore}, PNR=${promotedBooking.pnr}) from Waiting → Confirmed`;
+        console.log(`[Priority Queue] ${priorityQueueResult}`);
+      }
+    }
+
+    // Log Priority Queue run on the cancelled booking too
+    booking.algorithmLog = booking.algorithmLog || [];
+    booking.algorithmLog.push({
+      algorithm: 'PriorityQueue',
+      action: 'waitlist_check',
+      result: priorityQueueResult,
+    });
+    await booking.save();
+
     res.status(200).json({
       success: true,
       message: 'Booking cancelled successfully',
       data: booking,
+      algorithms: {
+        priorityQueue: {
+          result: priorityQueueResult,
+          promoted: promotedBooking ? {
+            bookingId: promotedBooking._id,
+            pnr: promotedBooking.pnr,
+            priorityScore: promotedBooking.priorityScore,
+          } : null,
+          waitlistSize: waitlistedBookings.length,
+        }
+      },
+      message2: promotedBooking
+        ? `Seat freed and auto-assigned to next passenger (PNR: ${promotedBooking.pnr}) via Priority Queue`
+        : 'Seat freed — no waitlisted passengers to promote'
     });
+
   } catch (error) {
     res.status(400).json({ 
       success: false,

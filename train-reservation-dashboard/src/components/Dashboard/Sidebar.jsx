@@ -178,6 +178,7 @@ const Sidebar = () => {
             </svg>
             {!isCollapsed && <span>Statistics</span>}
           </NavLink>
+
         </nav>
 
         {/* Footer Section */}

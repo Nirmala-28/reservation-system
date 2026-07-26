@@ -40,6 +40,15 @@ const trainAvailabilitySchema = new mongoose.Schema({
   duration: String,
   runDays: String,
   fareOptions: [fareOptionSchema],
+
+  // Segment Tree algorithm — ordered list of stops for this route
+  // e.g. ['Kathmandu', 'Bharatpur', 'Butwal', 'Pokhara']
+  // A passenger boarding at Bharatpur and alighting at Butwal maps to segment [1, 2]
+  stopsList: {
+    type: [String],
+    default: [],
+  },
+
   
   // Round Robin Algorithm fields
   scheduleSlots: [scheduleSlotSchema],

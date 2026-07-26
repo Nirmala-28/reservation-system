@@ -39,21 +39,21 @@ app.use('/api/algorithm', require('./routes/algorithm'));
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Train Reservation System API with Round Robin Algorithm',
+    message: 'Advanced Train Reservation System API',
     timestamp: new Date().toISOString(),
     version: '2.0.0',
-    algorithm: 'Round Robin',
+    algorithms_active: ['Segment Tree', 'Priority Queue', 'Dijkstra', 'Round Robin'],
     features: [
-      'Basic Train Management',
-      'Round Robin Scheduling Algorithm',
-      'Fair Time Slot Allocation',
-      'Performance Metrics',
-      'Queue Management with Time Quantum'
+      'Smart Seat Allocation (Segment Tree)',
+      'Waitlist Management (Priority Queue)',
+      'Route Optimization (Dijkstra)',
+      'Server Request Scheduling (Round Robin)'
     ],
     algorithm_info: {
-      name: 'Round Robin',
-      timeQuantum: '30 minutes (configurable)',
-      advantages: 'Fair allocation, No starvation, Time-sharing'
+      segmentTree: 'O(log N) Space-Time dynamic seat partitioning',
+      priorityQueue: 'O(log N) Max-Heap waitlist auto-promotion',
+      dijkstra: 'O(E + V log V) Shortest route stitching',
+      roundRobin: 'Time Quantum configurable concurrency'
     }
   });
 });
@@ -90,13 +90,13 @@ app.listen(PORT, () => {
   console.log('🚂========================🚂');
   console.log(`🚂 Train Reservation Server`);
   console.log(`🚂 Running on port ${PORT}`);
-  console.log('🚂 Round Robin Algorithm 🔄');
+  console.log('🚂 Core Algorithms Active:');
+  console.log('   🌲 Segment Tree (Seat Allocation)');
+  console.log('   👑 Priority Queue (Waitlist)');
+  console.log('   📍 Dijkstra (Route Optimization)');
+  console.log('   ⚙️ Round Robin (Scheduling)');
   console.log('🚂========================🚂');
   console.log(`📊 Health Check: http://localhost:${PORT}/api/health`);
-  console.log(`🧠 Algorithm Demo: http://localhost:${PORT}/api/algorithm/demo`);
-  console.log(`⚡ Algorithm Analyze: http://localhost:${PORT}/api/algorithm/analyze`);
-  console.log(`⚙️  Algorithm Config: http://localhost:${PORT}/api/algorithm/config`);
-  console.log('🚂========================🚂');
 });
 
 module.exports = app;

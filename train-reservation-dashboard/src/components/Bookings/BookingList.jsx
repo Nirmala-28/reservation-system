@@ -326,7 +326,7 @@ const BookingList = () => {
                 <th>Coupon</th>
                 <th>Total</th>
                 <th>Status</th>
-                <th>Round Robin</th>
+                <th>Algorithms Used</th>
               </tr>
             </thead>
             <tbody>
@@ -447,20 +447,50 @@ const BookingList = () => {
                     </span>
                   </td>
                   <td>
-                    {booking.roundRobinData ? (
-                      <div style={{ fontSize: '0.75rem' }}>
-                        <div style={{ color: '#007bff', fontWeight: '500' }}>
-                          Queue: #{booking.roundRobinData.queuePosition || 'N/A'}
-                        </div>
-                        <div style={{ color: '#6b7280' }}>
-                          Wait: {booking.roundRobinData.waitTime || 0}min
-                        </div>
-                      </div>
-                    ) : (
-                      <span style={{ color: '#9ca3af', fontStyle: 'italic', fontSize: '0.75rem' }}>
-                        Standard
-                      </span>
-                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {booking.segmentInfo && (
+                        <span style={{ 
+                          fontSize: '0.7rem', 
+                          background: '#e0f2fe', 
+                          color: '#0369a1',
+                          padding: '2px 6px',
+                          borderRadius: '10px',
+                          fontWeight: '600',
+                          display: 'inline-block',
+                          width: 'fit-content'
+                        }}>
+                          Segment Tree
+                        </span>
+                      )}
+                      {booking.roundRobinData && (
+                        <span style={{ 
+                          fontSize: '0.7rem', 
+                          background: '#fef3c7', 
+                          color: '#d97706',
+                          padding: '2px 6px',
+                          borderRadius: '10px',
+                          fontWeight: '600',
+                          display: 'inline-block',
+                          width: 'fit-content'
+                        }}>
+                          Round Robin
+                        </span>
+                      )}
+                      {booking.status?.toLowerCase() === 'waiting' && (
+                        <span style={{ 
+                          fontSize: '0.7rem', 
+                          background: '#fce7f3', 
+                          color: '#be185d',
+                          padding: '2px 6px',
+                          borderRadius: '10px',
+                          fontWeight: '600',
+                          display: 'inline-block',
+                          width: 'fit-content'
+                        }}>
+                          Priority Queue
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
