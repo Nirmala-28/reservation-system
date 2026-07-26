@@ -9,13 +9,18 @@ exports.register = async (req, res, next) => {
   try {
     const { name, email, password, phone, age, gender } = req.body;
 
+    if (!name || !email || !password || !phone || !age || !gender) {
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
     // Check if user already exists
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email: email.toLowerCase().trim() });
     if (user) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create user
+    // Create user (schema validators enforce email format, phone format,
+    // age range, and password complexity)
     user = await User.create({
       name,
       email,
@@ -27,6 +32,13 @@ exports.register = async (req, res, next) => {
 
     sendTokenResponse(user, 201, res);
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((val) => val.message);
+      return res.status(400).json({ message: messages[0], errors: messages });
+    }
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
     res.status(400).json({ message: error.message });
   }
 };
@@ -44,7 +56,7 @@ exports.login = async (req, res, next) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -93,11 +105,12 @@ exports.changePassword = async (req, res, next) => {
       });
     }
 
-    // Validate new password length
-    if (newPassword.length < 6) {
-      return res.status(400).json({ 
+    // Validate new password strength
+    const passwordComplexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordComplexityRegex.test(newPassword)) {
+      return res.status(400).json({
         success: false,
-        message: 'New password must be at least 6 characters long' 
+        message: 'New password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a special character (@$!%*?&)',
       });
     }
 

@@ -186,7 +186,7 @@ const StatsChart = () => {
     return {
       labels: data.labels || [],
       datasets: [{
-        label: dataKey === 'revenue' ? 'Revenue (₹)' : 
+        label: dataKey === 'revenue' ? 'Revenue (Rs.)' : 
               dataKey === 'bookings' ? 'Bookings' : 'Popular Trains',
         data: data.data || [],
         backgroundColor: dataKey === 'popularTrains' ? [
@@ -279,7 +279,7 @@ const StatsChart = () => {
     return (
       <div className={styles.error}>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Retry</button>
+        <button className={styles.retryButton} onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }
@@ -306,7 +306,7 @@ const StatsChart = () => {
       <div className={styles.statsCards}>
         <StatsCard 
           title="Total Revenue" 
-          value={`₹${currentTotals.revenue.toLocaleString()}`} 
+          value={`Rs.${currentTotals.revenue.toLocaleString()}`} 
           change={currentTotals.revenueChange} 
         />
         <StatsCard 

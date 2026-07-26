@@ -48,6 +48,35 @@
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
   }
   
+  .passwordWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .passwordWrapper input {
+    padding-right: 3rem;
+  }
+  
+  .passwordToggle {
+    position: absolute;
+    right: 0.75rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: color 0.2s;
+  }
+  
+  .passwordToggle:hover {
+    color: #4f46e5;
+  }
+  
   .loginButton {
     width: 100%;
     padding: 0.875rem;

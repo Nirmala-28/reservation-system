@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { API_BASE_URL } from "../../config/api";
 import { 
   FaRupeeSign, FaTrain, FaUser, FaTag, FaCreditCard, 
   FaWallet, FaCheck, FaShieldAlt, FaClock,
@@ -59,13 +60,13 @@ const PaymentModal = () => {
   // Utility function to parse price from various formats
   const parsePrice = (priceString) => {
     if (typeof priceString === 'number') return priceString;
-    return parseFloat(priceString.toString().replace(/[₹,\s]/g, '')) || 0;
+    return parseFloat(priceString.toString().replace(/[Rs.,\s]/g, '')) || 0;
   };
 
   // Utility function to format currency
   const formatCurrency = (amount) => {
     const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-    return '₹' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
   // Scroll to top when component mounts
@@ -104,7 +105,7 @@ const PaymentModal = () => {
     } else if (method === 'paypal') {
       try {
         setPaymentState(prev => ({ ...prev, status: 'processing' }));
-        const response = await fetch('http://localhost:5002/api/payments/paypal/create-order', {
+        const response = await fetch(API_BASE_URL + '/api/payments/paypal/create-order', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -181,7 +182,7 @@ const PaymentModal = () => {
       }
 
       // Update booking payment status
-      const updateResponse = await fetch(`http://localhost:5002/api/bookings/${bookingDetails.bookingId}/payment`, {
+      const updateResponse = await fetch(`${API_BASE_URL}/api/bookings/${bookingDetails.bookingId}/payment`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

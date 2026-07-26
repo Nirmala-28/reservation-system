@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import useApi from '../../hooks/useApi';
 import styles from './TrainList.module.css';
+import { API_BASE_URL } from '../../config/api';
 
 const TrainList = () => {
   const [trains, setTrains] = useState([]);
@@ -40,7 +41,7 @@ const TrainList = () => {
         
         // More specific error handling
         if (error.code === 'ERR_NETWORK') {
-          setError('Cannot connect to server. Please ensure the server is running on port 5002.');
+          setError(`Cannot connect to server. Please ensure the server is running at ${API_BASE_URL}.`);
         } else if (error.code === 'ERR_INSUFFICIENT_RESOURCES') {
           setError('Server is overloaded. Please wait a moment and try again.');
         } else {
@@ -214,7 +215,10 @@ const TrainList = () => {
                         state={{ train }}
                         title="Edit basic train information"
                       >
-                        ✏️ Edit
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                        Edit
                       </Link>
                       
                       <Link 
@@ -226,7 +230,10 @@ const TrainList = () => {
                         className={styles.scheduleButton}
                         title="Create schedule with algorithms"
                       >
-                        📅 Schedule
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.9 3 3 3.9 3 5v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H5V8h14v13zM7 10h5v5H7z"/>
+                        </svg>
+                        Schedule
                       </Link>
                       
                       <button 
@@ -235,7 +242,19 @@ const TrainList = () => {
                         disabled={deleteLoading === train._id}
                         title="Delete train and all schedules"
                       >
-                        {deleteLoading === train._id ? '⏳' : '🗑️'} Delete
+                        {deleteLoading === train._id ? (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                            Deleting…
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                            Delete
+                          </>
+                        )}
                       </button>
                     </div>
                   </td>

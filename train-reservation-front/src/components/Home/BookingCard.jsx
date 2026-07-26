@@ -8,6 +8,7 @@ import {
   FaChevronDown
 } from 'react-icons/fa';
 import styles from "./Booking.module.css";
+import { API_BASE_URL } from "../../config/api";
 
 const BookingCard = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const BookingCard = () => {
   useEffect(() => {
     const fetchTrainData = async () => {
       try {
-        const response = await fetch('http://localhost:5002/api/train-availability');
+        const response = await fetch(API_BASE_URL + '/api/train-availability');
         const data = await response.json();
         
         if (data.success && data.data.length > 0) {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Signup.module.css';
-import { FaCheckCircle, FaTimes, FaExclamationCircle, FaArrowLeft } from 'react-icons/fa';
+import { FaCheckCircle, FaTimes, FaExclamationCircle, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config/api';
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ const Signup = () => {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState('success');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Enhanced email validation function
   const validateEmailFormat = (email) => {
@@ -201,7 +204,7 @@ const Signup = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5002/api/auth/register', {
+      const response = await fetch(API_BASE_URL + '/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -402,15 +405,25 @@ const Signup = () => {
           
           <div className={styles.formGroup}>
             <label htmlFor="password" className={styles.formLabel}>Password*</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`${styles.formInput} ${errors.password ? styles.errorInput : ''}`}
-              placeholder="Create a strong password"
-            />
+            <div className={styles.passwordWrapper}>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                className={`${styles.formInput} ${errors.password ? styles.errorInput : ''}`}
+                placeholder="Create a strong password"
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
             {errors.password && <span className={styles.errorText}>{errors.password}</span>}
             <div className={styles.passwordHelp}>
               <small>Must contain: uppercase, lowercase, number, and special character (@$!%*?&)</small>
@@ -419,15 +432,25 @@ const Signup = () => {
           
           <div className={styles.formGroup}>
             <label htmlFor="confirmPassword" className={styles.formLabel}>Confirm Password*</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className={`${styles.formInput} ${errors.confirmPassword ? styles.errorInput : ''}`}
-              placeholder="Confirm your password"
-            />
+            <div className={styles.passwordWrapper}>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`${styles.formInput} ${errors.confirmPassword ? styles.errorInput : ''}`}
+                placeholder="Confirm your password"
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
             {errors.confirmPassword && <span className={styles.errorText}>{errors.confirmPassword}</span>}
           </div>
           

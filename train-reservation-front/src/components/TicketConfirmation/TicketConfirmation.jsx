@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { API_BASE_URL } from "../../config/api";
 import { 
   FaCheckCircle, FaPrint, FaFileDownload, FaTrain, 
   FaUser, FaRupeeSign, FaQrcode, FaSpinner, 
@@ -20,7 +21,7 @@ const TicketConfirmation = () => {
   // Utility function to format currency
   const formatCurrency = (amount) => {
     const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-    return '₹' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
   // Scroll to top when component mounts
@@ -69,7 +70,7 @@ const TicketConfirmation = () => {
     // Fetch the booking details
     const fetchBookingDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5002/api/bookings/${location.state.bookingId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/bookings/${location.state.bookingId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

@@ -61,9 +61,10 @@ margin-bottom: 1rem;
 }
 
 .formRow {
-display: flex;
-gap: 1.5rem;
-margin-bottom: 1.5rem;
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
 }
 
 .formGroup {
@@ -110,19 +111,30 @@ color: #6b7280;
 }
 
 .checkboxGroup {
-margin-top: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
 }
 
 .checkboxLabel {
-display: flex;
-align-items: center;
-gap: 0.5rem;
-cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.95rem;
+  color: #374151;
 }
 
 .checkboxLabel input[type="checkbox"] {
-width: auto;
-margin: 0;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  margin: 0;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+  accent-color: #4f46e5;
+  cursor: pointer;
+  vertical-align: middle;
 }
 
 /* Enhanced Facilities Section */
@@ -139,12 +151,13 @@ box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .facilityItem {
-background: white;
-border: 2px solid #e5e7eb;
-border-radius: 8px;
-padding: 0.75rem;
-transition: all 0.3s ease;
-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 .facilityItem:hover {
@@ -160,33 +173,37 @@ box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
 .facilityLabel {
-display: flex;
-align-items: center;
-gap: 0.75rem;
-cursor: pointer;
-font-size: 0.95rem;
-color: #374151;
-font-weight: 500;
-transition: color 0.2s;
-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 500;
+  transition: color 0.2s;
+  width: 100%;
 }
 
 .facilityLabel:hover {
-color: #1f2937;
+  color: #1f2937;
 }
 
 .facilityLabel input[type="checkbox"] {
-width: 18px;
-height: 18px;
-margin: 0;
-accent-color: #3b82f6;
-cursor: pointer;
-border-radius: 4px;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  margin: 0;
+  margin-right: 0.5rem;
+  accent-color: #3b82f6;
+  cursor: pointer;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .facilityName {
-user-select: none;
-flex: 1;
+  user-select: none;
+  flex: 1;
+  line-height: 1.2;
 }
 
 .selectedFacilities {
@@ -247,37 +264,26 @@ transform: translate(-50%, -50%);
 }
 
 .facilityTag {
-display: inline-flex;
-align-items: center;
-gap: 0.5rem;
-padding: 0.5rem 1rem;
-background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-color: white;
-border: none;
-border-radius: 25px;
-font-size: 0.875rem;
-font-weight: 600;
-box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s ease;
 }
 
 .facilityTag:hover {
-transform: translateY(-1px);
-box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
-.facilityTag::before {
-content: "✓";
-background: rgba(255, 255, 255, 0.3);
-width: 16px;
-height: 16px;
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 0.75rem;
-font-weight: bold;
-}
+/* No ::before pseudo-element — the JSX renders a single checkmark icon */
 
 .formActions {
 display: flex;
@@ -366,3 +372,5 @@ margin-left: 0;
 text-align: center;
 }
 }
+/* Required field asterisk */
+.required { color: #ef4444; font-weight: 700; margin-left: 2px; }

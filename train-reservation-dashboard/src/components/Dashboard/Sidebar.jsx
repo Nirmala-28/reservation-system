@@ -119,9 +119,6 @@ const Sidebar = () => {
             {!isCollapsed && <span>Scheduling</span>}
           </NavLink>
 
-          {/* Enhanced separator for visual grouping */}
-          <div className={styles.separator}></div>
-
           <NavLink
             to="/dashboard/meals"
             className={({ isActive }) => 

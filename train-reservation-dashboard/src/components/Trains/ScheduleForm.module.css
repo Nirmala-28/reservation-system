@@ -410,3 +410,5 @@ font-size: 0.875rem;
 padding: 0.5rem;
 }
 }
+/* Required field asterisk */
+.required { color: #ef4444; font-weight: 700; margin-left: 2px; }

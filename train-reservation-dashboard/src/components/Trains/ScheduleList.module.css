@@ -1,7 +1,7 @@
 /* ScheduleList.module.css */
 .scheduleList {
     padding: 2rem;
-    max-width: 1600px;
+    max-width: 1100px;
     margin: 0 auto;
   }
   
@@ -63,6 +63,16 @@
   .table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
+  }
+  
+  .table th:nth-child(1) { width: 28%; }
+  .table th:nth-child(2) { width: 42%; }
+  .table th:nth-child(3) { width: 30%; }
+  
+  .table td:nth-child(3) {
+    text-align: left;
+    vertical-align: middle;
   }
   
   .table th {
@@ -132,11 +142,26 @@
     font-size: 0.75rem;
   }
   
-  .arrow {
-    text-align: center;
-    color: #3b82f6;
-    font-weight: bold;
-    margin: 0.25rem 0;
+  .routeDivider {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 2px 0 2px 7px;
+  }
+
+  .routeLine {
+    display: block;
+    width: 1px;
+    height: 6px;
+    background: #cbd5e1;
+    margin-left: 3px;
+  }
+
+  .routeArrow {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    line-height: 1;
+    margin-left: 1px;
   }
   
   .duration {
@@ -148,55 +173,67 @@
   .actionButtons {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    min-width: 120px;
+    gap: 0.45rem;
+    max-width: 160px;
   }
   
   .processButton, .queueButton, .editButton, .metricsButton, .deleteButton {
-    padding: 0.5rem 0.75rem;
+    padding: 0.45rem 1rem;
     border: none;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 500;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
     cursor: pointer;
     text-decoration: none;
     text-align: center;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
   }
   
   .processButton {
-    background: #10b981;
+    background: linear-gradient(135deg, #10b981, #059669);
     color: white;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
   }
   
   .processButton:disabled {
-    background: #9ca3af;
+    background: #d1d5db;
+    box-shadow: none;
     cursor: not-allowed;
   }
   
   .queueButton {
-    background: #f59e0b;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
   }
   
   .editButton {
-    background: #f59e0b;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
   }
   
   .metricsButton {
-    background: #6366f1;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
     color: white;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
   }
   
   .deleteButton {
-    background: #ef4444;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
   }
   
   .processButton:hover:not(:disabled), .queueButton:hover, .editButton:hover, .metricsButton:hover, .deleteButton:hover {
+    filter: brightness(1.1);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   
   .noSchedules {

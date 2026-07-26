@@ -330,7 +330,7 @@ return (
 <h3>🚉 Train Information</h3>
 <div className={styles.formRow}>
 <div className={styles.formGroup}>
-<label>Select Train *</label>
+<label>Select Train <span className={styles.required}>*</span></label>
 {preselectedTrain ? (
 <div className={styles.preselectedTrain}>
 <strong>{preselectedTrain.trainNumber}</strong> - {preselectedTrain.trainName}
@@ -386,7 +386,7 @@ placeholder="4.5"
  
 
 <div className={styles.formGroup}>
-<label>Time Quantum (minutes) *</label>
+<label>Time Quantum (minutes) <span className={styles.required}>*</span></label>
 <input
 type="number"
 name="timeQuantum"
@@ -418,7 +418,7 @@ Each booking gets exactly this amount of processing time before moving to the ne
 <h3>🛤️ Route Information</h3>
 <div className={styles.formRow}>
 <div className={styles.formGroup}>
-<label>Departure Station *</label>
+<label>Departure Station <span className={styles.required}>*</span></label>
 <input
 type="text"
 name="departureStation"
@@ -429,7 +429,7 @@ placeholder="New Delhi"
 />
 </div>
 <div className={styles.formGroup}>
-<label>Arrival Station *</label>
+<label>Arrival Station <span className={styles.required}>*</span></label>
 <input
 type="text"
 name="arrivalStation"
@@ -447,7 +447,7 @@ placeholder="Mumbai Central"
 <h3>⏰ Schedule Information</h3>
 <div className={styles.formRow}>
 <div className={styles.formGroup}>
-<label>Departure Date *</label>
+<label>Departure Date <span className={styles.required}>*</span></label>
 <input
 type="date"
 name="departureDate"
@@ -457,7 +457,7 @@ required
 />
 </div>
 <div className={styles.formGroup}>
-<label>Departure Time *</label>
+<label>Departure Time <span className={styles.required}>*</span></label>
 <input
 type="time"
 name="departureTime"
@@ -480,7 +480,7 @@ placeholder="Auto-calculated if same day"
 />
 </div>
 <div className={styles.formGroup}>
-<label>Arrival Time *</label>
+<label>Arrival Time <span className={styles.required}>*</span></label>
 <input
 type="time"
 name="arrivalTime"
@@ -589,7 +589,7 @@ type="text"
 name="price"
 value={newFareOption.price}
 onChange={handleFareOptionChange}
-placeholder="₹1500"
+placeholder="Rs.1500"
 />
 </td>
 <td>

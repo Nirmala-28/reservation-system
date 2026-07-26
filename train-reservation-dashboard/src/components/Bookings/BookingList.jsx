@@ -106,9 +106,9 @@ const BookingList = () => {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return '₹0';
+    if (!amount) return 'Rs.0';
     const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-    return '₹' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
   const exportToCSV = () => {

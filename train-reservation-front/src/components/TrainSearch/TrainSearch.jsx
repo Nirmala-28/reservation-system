@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import styles from "./TrainSearch.module.css";
 import TrainDetailsModal from "./TrainDetailsModal";
 import { AuthContext } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../config/api";
 
 const TrainSearch = () => {
   const [selectedTrain, setSelectedTrain] = useState(null);
@@ -70,7 +71,7 @@ const TrainSearch = () => {
       
       try {
         // Updated to use train-availability endpoint with search functionality
-        const response = await fetch('http://localhost:5002/api/train-availability/search', {
+        const response = await fetch(API_BASE_URL + '/api/train-availability/search', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

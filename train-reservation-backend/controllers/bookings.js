@@ -68,7 +68,7 @@ exports.createBooking = async (req, res) => {
     }
 
     // Calculate base fare
-    const baseFare = parseFloat(selectedClass.price.replace(/[₹,\s]/g, '')) * passengers.length;
+    const baseFare = parseFloat(selectedClass.price.replace(/[Rs.,\s]/g, '')) * passengers.length;
     
     // Calculate meal prices
     let mealTotal = 0;
@@ -117,7 +117,7 @@ exports.createBooking = async (req, res) => {
         if (subtotal < coupon.minOrderValue) {
           return res.status(400).json({ 
             success: false,
-            message: `Minimum order value for this coupon is ₹${coupon.minOrderValue}` 
+            message: `Minimum order value for this coupon is Rs.${coupon.minOrderValue}` 
           });
         }
         

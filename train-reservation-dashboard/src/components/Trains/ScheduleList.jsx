@@ -233,7 +233,11 @@ const ScheduleList = () => {
                           <strong>📍 {schedule.departureStation}</strong>
                           <small>{formatDate(schedule.departureDate)} {formatTime(schedule.departureTime)}</small>
                         </div>
-                        <div className={styles.arrow}>↓</div>
+                        <div className={styles.routeDivider}>
+                          <span className={styles.routeLine}></span>
+                          <span className={styles.routeArrow}>&#8595;</span>
+                          <span className={styles.routeLine}></span>
+                        </div>
                         <div className={styles.station}>
                           <strong>🎯 {schedule.arrivalStation}</strong>
                           <small>{formatDate(schedule.arrivalDate)} {formatTime(schedule.arrivalTime)}</small>
@@ -247,25 +251,27 @@ const ScheduleList = () => {
                   
                   <td>
                     <div className={styles.actionButtons}>
-                     
-                      
                       <Link
                         to={`/dashboard/train-availability/edit/${schedule._id}`}
                         className={styles.editButton}
                         state={{ availability: schedule }}
                         title="Edit schedule"
                       >
-                        ✏️ Edit
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                        Edit
                       </Link>
-                      
-                
                       
                       <button
                         onClick={() => handleDelete(schedule._id)}
                         className={styles.deleteButton}
                         title="Delete schedule"
                       >
-                        🗑️ Delete
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                        Delete
                       </button>
                     </div>
                   </td>

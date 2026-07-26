@@ -68,7 +68,7 @@ const CouponForm = () => {
       <form onSubmit={handleSubmit}>
         <div className={styles.formGrid}>
           <div className={styles.formGroup}>
-            <label>Coupon Code</label>
+            <label>Coupon Code <span className={styles.required}>*</span></label>
             <div className={styles.codeInput}>
               <input
                 type="text"
@@ -90,7 +90,7 @@ const CouponForm = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Description</label>
+            <label>Description <span className={styles.required}>*</span></label>
             <input
               type="text"
               name="description"
@@ -101,7 +101,7 @@ const CouponForm = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Discount Type</label>
+            <label>Discount Type <span className={styles.required}>*</span></label>
             <select
               name="discountType"
               value={coupon.discountType}
@@ -117,7 +117,7 @@ const CouponForm = () => {
             <label>
               {coupon.discountType === 'percentage' 
                 ? 'Discount Percentage' 
-                : 'Discount Amount'}
+                : 'Discount Amount'} <span className={styles.required}>*</span>
             </label>
             <input
               type="number"
@@ -131,7 +131,7 @@ const CouponForm = () => {
 
           {coupon.discountType === 'percentage' && (
             <div className={styles.formGroup}>
-              <label>Maximum Discount (₹)</label>
+              <label>Maximum Discount (Rs.)</label>
               <input
                 type="number"
                 name="maxDiscount"
@@ -143,7 +143,7 @@ const CouponForm = () => {
           )}
 
           <div className={styles.formGroup}>
-            <label>Minimum Order Value (₹)</label>
+            <label>Minimum Order Value (Rs.) <span className={styles.required}>*</span></label>
             <input
               type="number"
               name="minOrderValue"
@@ -155,7 +155,7 @@ const CouponForm = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Valid From</label>
+            <label>Valid From <span className={styles.required}>*</span></label>
             <input
               type="date"
               name="validFrom"
@@ -166,7 +166,7 @@ const CouponForm = () => {
           </div>
 
           <div className={styles.formGroup}>
-            <label>Valid To</label>
+            <label>Valid To <span className={styles.required}>*</span></label>
             <input
               type="date"
               name="validTo"

@@ -189,7 +189,7 @@ const TrainForm = () => {
       <form onSubmit={handleSubmit}>
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label>Train Number *</label>
+            <label>Train Number <span className={styles.required}>*</span></label>
             <input
               type="text"
               name="trainNumber"
@@ -205,7 +205,7 @@ const TrainForm = () => {
           </div>
           
           <div className={styles.formGroup}>
-            <label>Train Name *</label>
+            <label>Train Name <span className={styles.required}>*</span></label>
             <input
               type="text"
               name="trainName"
@@ -217,7 +217,7 @@ const TrainForm = () => {
           </div>
           
           <div className={styles.formGroup}>
-            <label>Train Type *</label>
+            <label>Train Type <span className={styles.required}>*</span></label>
             <select
               name="trainType"
               value={train.trainType}
@@ -233,7 +233,7 @@ const TrainForm = () => {
  
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label>Total Capacity *</label>
+            <label>Total Capacity <span className={styles.required}>*</span></label>
             <input
               type="number"
               name="totalCapacity"

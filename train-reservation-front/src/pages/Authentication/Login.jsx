@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Login.module.css';
 import { useAuth } from '../../context/AuthContext';
-import { FaCheckCircle, FaTimes, FaExclamationCircle, FaArrowLeft } from 'react-icons/fa';
+import { FaCheckCircle, FaTimes, FaExclamationCircle, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { API_BASE_URL } from '../../config/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +52,7 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5002/api/auth/login', {
+      const response = await fetch(API_BASE_URL + '/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,14 +165,24 @@ const Login = () => {
           
           <div className={styles.formGroup}>
             <label htmlFor="password" className={styles.formLabel}>Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={styles.formInput}
-              placeholder="Enter your password"
-            />
+            <div className={styles.passwordWrapper}>
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={styles.formInput}
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
           
           <div className={styles.formOptions}>

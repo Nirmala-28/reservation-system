@@ -1,6 +1,7 @@
 // hooks/useApi.js - Fixed with proper imports
 import { useState } from 'react';
 import api from '../services/api';
+import { API_BASE_URL } from '../config/api';
 
 const useApi = () => {
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,7 @@ const useApi = () => {
       let errorMessage = 'An error occurred';
       
       if (err.code === 'ERR_NETWORK') {
-        errorMessage = 'Cannot connect to server. Please check if the server is running on port 5002.';
+        errorMessage = `Cannot connect to server. Please check if the server is running at ${API_BASE_URL}.`;
       } else if (err.code === 'ERR_INSUFFICIENT_RESOURCES') {
         errorMessage = 'Server is overloaded or not responding. Please try again.';
       } else if (err.response?.status === 404) {

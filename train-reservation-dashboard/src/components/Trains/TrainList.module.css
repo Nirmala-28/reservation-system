@@ -186,44 +186,54 @@
 .actionButtons {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  min-width: 120px;
+  gap: 0.45rem;
+  min-width: 130px;
 }
 
 .editButton, .scheduleButton, .deleteButton {
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 1rem;
   border: none;
-  border-radius: 4px;
-  font-size: 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
-  transition: all 0.2s;
-  font-weight: 500;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 
 .editButton {
-  background: #f59e0b;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: white;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
 }
 
 .scheduleButton {
-  background: #10b981;
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
 }
 
 .deleteButton {
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
 }
 
 .editButton:hover, .scheduleButton:hover, .deleteButton:hover:not(:disabled) {
-  opacity: 0.8;
+  filter: brightness(1.1);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .deleteButton:disabled {
-  background: #9ca3af;
+  background: #d1d5db;
+  box-shadow: none;
   cursor: not-allowed;
 }
 

@@ -123,7 +123,7 @@ return (
 <form onSubmit={handleSubmit}>
 <div className={styles.formGrid}>
 <div className={styles.formGroup}>
-<label>Meal Name</label>
+<label>Meal Name <span className={styles.required}>*</span></label>
 <input
 type="text"
 name="name"
@@ -134,7 +134,7 @@ required
 </div>
 
 <div className={styles.formGroup}>
-<label>Price (₹)</label>
+<label>Price (Rs.) <span className={styles.required}>*</span></label>
 <input
 type="text" // Changed from "number" to "text" for better control
 name="price"
@@ -147,7 +147,7 @@ required
 </div>
 
 <div className={styles.formGroup}>
-<label>Train Number</label>
+<label>Train Number <span className={styles.required}>*</span></label>
 <select
 name="trainNumber"
 value={meal.trainNumber}
@@ -169,7 +169,7 @@ Array.isArray(trains) && trains.map(train => (
 </div>
 
 <div className={styles.formGroup}>
-<label>Category</label>
+<label>Category <span className={styles.required}>*</span></label>
 <select
 name="category"
 value={meal.category}
@@ -219,13 +219,14 @@ Unavailable
 </div>
 
 <div className={styles.formGroup}>
-<label>Image URL</label>
+<label>Image URL <span className={styles.required}>*</span></label>
 <input
 type="url"
 name="photoUrl"
 value={meal.photoUrl}
 onChange={handleChange}
 placeholder="https://example.com/image.jpg"
+required
 />
 {meal.photoUrl && (
 <div className={styles.imagePreview}>

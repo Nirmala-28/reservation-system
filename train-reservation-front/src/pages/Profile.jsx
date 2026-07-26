@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config/api';
 import styles from '../components/Home/Profile.module.css';
 import { 
   FaUser, FaEnvelope, FaPhone, FaCalendarAlt, FaVenusMars, FaUserTag, 
@@ -43,7 +44,7 @@ const Profile = () => {
           throw new Error('No authentication token found');
         }
 
-        const response = await fetch(`http://localhost:5002/api/auth/me`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -148,7 +149,7 @@ const Profile = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5002/api/auth/change-password', {
+      const response = await fetch(API_BASE_URL + '/api/auth/change-password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -1,7 +1,8 @@
 // services/api.js - Fixed with proper default export
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
-const baseURL = 'http://localhost:5002';
+const baseURL = API_BASE_URL;
 
 const api = axios.create({
   baseURL,

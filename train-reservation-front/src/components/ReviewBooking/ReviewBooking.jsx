@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { API_BASE_URL } from "../../config/api";
 import { 
   FaUser, FaPhone, FaUtensils, FaTrain, FaRupeeSign, 
   FaEdit, FaCheck, FaChevronDown, FaChevronUp, 
@@ -48,12 +49,12 @@ const ReviewBooking = () => {
 
   const parsePrice = (priceString) => {
     if (typeof priceString === 'number') return priceString;
-    return parseFloat(priceString.toString().replace(/[₹,\s]/g, '')) || 0;
+    return parseFloat(priceString.toString().replace(/[Rs.,\s]/g, '')) || 0;
   };
 
   const formatCurrency = (amount) => {
     const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-    return '₹' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
   // Payment method options - Stripe commented out
@@ -82,7 +83,7 @@ const ReviewBooking = () => {
       console.log(`Fetching meals for train: ${trainNumber}`);
       
       // Updated to use the correct endpoint for train-specific meals
-      const response = await fetch(`http://localhost:5002/api/meals/train/${trainNumber}`);
+      const response = await fetch(`${API_BASE_URL}/api/meals/train/${trainNumber}`);
       const data = await response.json();
       
       console.log("Meals API response:", data);
@@ -272,7 +273,7 @@ const ReviewBooking = () => {
       const fareBreakdown = calculateFareBreakdown(true);
       const baseAmount = parseFloat(fareBreakdown.totalAmount);
 
-      const response = await fetch(`http://localhost:5002/api/coupons/apply`, {
+      const response = await fetch(`${API_BASE_URL}/api/coupons/apply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -481,7 +482,7 @@ const ReviewBooking = () => {
     };
   
     try {
-      const response = await fetch('http://localhost:5002/api/bookings', {
+      const response = await fetch(API_BASE_URL + '/api/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

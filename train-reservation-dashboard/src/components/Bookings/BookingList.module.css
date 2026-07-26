@@ -26,6 +26,10 @@
     border-radius: 4px;
     font-size: 1rem;
   }
+
+  select.filterSelect, .dateFilter {
+    cursor: pointer;
+  }
   
   .tableContainer {
     overflow-x: auto;

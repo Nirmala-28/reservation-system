@@ -94,7 +94,7 @@ const MealList = () => {
                 <td>{meal.name}</td>
                 <td>{meal.trainNumber}</td>
                 <td>{meal.category}</td>
-                <td>₹{meal.price}</td>
+                <td>Rs.{meal.price}</td>
                 <td>
                   <span 
                     className={`${styles.status} ${

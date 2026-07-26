@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/api';
 import { 
   FaTrain, 
   FaUser, 
@@ -31,7 +32,7 @@ const BookingHistory = () => {
     const fetchBookings = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5002/api/bookings/my-bookings', {
+        const response = await fetch(API_BASE_URL + '/api/bookings/my-bookings', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -72,7 +73,7 @@ const BookingHistory = () => {
     
     try {
       setCancellingId(bookingId);
-      const response = await fetch(`http://localhost:5002/api/bookings/${bookingId}/cancel`, {
+      const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/cancel`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -316,7 +317,7 @@ const BookingHistory = () => {
                     <FaRupeeSign className={styles.detailIcon} />
                     <span className={styles.detailLabel}>Amount:</span>
                     <span className={styles.detailValue}>
-                      ₹{(booking.paymentDetails && booking.paymentDetails.total) || 
+                      Rs.{(booking.paymentDetails && booking.paymentDetails.total) || 
                         (booking.totalAmount) || '0'}
                     </span>
                   </div>
