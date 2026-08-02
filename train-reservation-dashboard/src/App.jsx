@@ -24,7 +24,7 @@ const PrivateRoute = ({ children }) => {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  return user ? children : <Navigate to="/login" replace />;
+  return user && user.role === 'admin' ? children : <Navigate to="/login" replace />;
 };
 
 function App() {

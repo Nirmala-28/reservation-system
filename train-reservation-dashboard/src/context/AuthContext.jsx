@@ -14,9 +14,12 @@ export const AuthProvider = ({ children }) => {
     const verifyToken = async () => {
       if (token) {
         try {
-          // You might want to add a token verification endpoint
-          // const { data } = await api.get('/api/auth/verify');
-          setUser({ email: 'admin@train.com' }); // Mock user
+          const { data } = await api.get('/api/auth/me');
+          if (!data?.data || data.data.role !== 'admin') {
+            logout();
+            return;
+          }
+          setUser(data.data);
         } catch (error) {
           logout();
         }
@@ -30,9 +33,17 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const { data } = await api.post('/api/auth/login', { email, password });
+
+      if (data?.data?.role !== 'admin') {
+        localStorage.removeItem('admin_token');
+        setToken(null);
+        setUser(null);
+        throw new Error('Only admin users may access the admin dashboard');
+      }
+
       localStorage.setItem('admin_token', data.token);
       setToken(data.token);
-      setUser({ email });
+      setUser(data.data);
       navigate('/dashboard');
     } catch (error) {
       throw error;
