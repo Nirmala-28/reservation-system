@@ -24,8 +24,8 @@ const CouponForm = () => {
     if (id) {
       const fetchCoupon = async () => {
         try {
-          const data = await get(`/api/admin/coupons/${id}`);
-          setCoupon(data);
+          const response = await get(`/api/admin/coupons/${id}`);
+          setCoupon(response.data || response);
         } catch (error) {
           console.error('Failed to fetch coupon:', error);
         }
@@ -78,7 +78,9 @@ const CouponForm = () => {
                 required
                 pattern="[A-Z0-9]+"
                 title="Only uppercase letters and numbers"
+                disabled={!!id}
               />
+              {!id && (
               <button 
                 type="button" 
                 onClick={generateRandomCode}
@@ -86,6 +88,7 @@ const CouponForm = () => {
               >
                 Generate
               </button>
+              )}
             </div>
           </div>
 

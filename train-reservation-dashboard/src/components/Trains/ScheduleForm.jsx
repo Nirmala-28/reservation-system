@@ -108,7 +108,7 @@ const { name, value, type } = e.target;
  
 
 if (type === 'number') {
-setSchedule(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+setSchedule(prev => ({ ...prev, [name]: value === '' ? '' : (parseFloat(value) || 0) }));
 } else {
 setSchedule(prev => ({ ...prev, [name]: value }));
 }
@@ -250,6 +250,9 @@ const submitData = {
 algorithmType: 'RoundRobin'
 };
  
+if (submitData.timeQuantum === '' || submitData.timeQuantum === 0 || isNaN(submitData.timeQuantum)) {
+  submitData.timeQuantum = 30; // Default if left blank
+}
 
 console.log('Submitting schedule data:', submitData);
  
@@ -396,7 +399,7 @@ placeholder="4.5"
  
 
 <div className={styles.formGroup}>
-<label>Time Quantum (minutes) <span className={styles.required}>*</span></label>
+<label>Time Quantum (minutes)</label>
 <input
 type="number"
 name="timeQuantum"
@@ -404,7 +407,6 @@ value={schedule.timeQuantum}
 onChange={handleChange}
 min="5"
 max="120"
-required
 />
 <small className={styles.helpText}>
 Each booking gets exactly this amount of processing time before moving to the next

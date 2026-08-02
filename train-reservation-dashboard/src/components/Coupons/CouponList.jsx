@@ -114,7 +114,7 @@ const CouponList = () => {
                     {coupon.active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td>
+                <td className={styles.actionsCell}>
                   <Link 
                     to={`/dashboard/coupons/edit/${coupon._id}`} 
                     className={styles.editButton}

@@ -216,6 +216,21 @@ exports.getMeals = async (req, res) => {
   }
 };
 
+exports.getMeal = async (req, res) => {
+  try {
+    const meal = await Meal.findById(req.params.id);
+    if (!meal) {
+      return res.status(404).json({ message: 'Meal not found' });
+    }
+    res.status(200).json({
+      success: true,
+      data: meal,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 exports.createMeal = async (req, res) => {
     try {
       const mealData = {
@@ -281,6 +296,21 @@ exports.getCoupons = async (req, res) => {
       success: true,
       count: coupons.length,
       data: coupons,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.getCoupon = async (req, res) => {
+  try {
+    const coupon = await Coupon.findById(req.params.id);
+    if (!coupon) {
+      return res.status(404).json({ message: 'Coupon not found' });
+    }
+    res.status(200).json({
+      success: true,
+      data: coupon,
     });
   } catch (error) {
     res.status(400).json({ message: error.message });

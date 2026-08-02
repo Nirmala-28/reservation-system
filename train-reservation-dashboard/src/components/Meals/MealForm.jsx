@@ -43,7 +43,8 @@ setTrains(trainsData);
 
 // If editing, fetch meal data
 if (id) {
-const mealData = await get(`/api/admin/meals/${id}`);
+const response = await get(`/api/admin/meals/${id}`);
+const mealData = response.data || response;
 setMeal({
 ...mealData,
 // Ensure price is converted to string for the input

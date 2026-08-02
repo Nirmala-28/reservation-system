@@ -5,10 +5,12 @@ const {
   updateTrain,
   deleteTrain,
   getMeals,
+  getMeal,
   createMeal,
   updateMeal,
   deleteMeal,
   getCoupons,
+  getCoupon,
   createCoupon,
   updateCoupon,
   deleteCoupon,
@@ -40,12 +42,14 @@ router.delete('/train-availability/:id', deleteTrainAvailability);
 
 // Meal management
 router.get('/meals', getMeals);
+router.get('/meals/:id', getMeal);
 router.post('/meals', upload.single('photo'), createMeal);
 router.put('/meals/:id', upload.single('photo'), updateMeal);
 router.delete('/meals/:id', deleteMeal);
 
 // Coupon management
 router.get('/coupons', getCoupons);
+router.get('/coupons/:id', getCoupon);
 router.post('/coupons', createCoupon);
 router.put('/coupons/:id', updateCoupon);
 router.delete('/coupons/:id', deleteCoupon);

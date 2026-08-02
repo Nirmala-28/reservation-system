@@ -104,7 +104,7 @@ const MealList = () => {
                     {meal.available ? 'Available' : 'Unavailable'}
                   </span>
                 </td>
-                <td>
+                <td className={styles.actionsCell}>
                   <Link 
                     to={`/dashboard/meals/edit/${meal._id}`} 
                     className={styles.editButton}
