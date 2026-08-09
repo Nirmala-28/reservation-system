@@ -405,7 +405,7 @@ type="number"
 name="timeQuantum"
 value={schedule.timeQuantum}
 onChange={handleChange}
-min="5"
+min="0"
 max="120"
 />
 <small className={styles.helpText}>

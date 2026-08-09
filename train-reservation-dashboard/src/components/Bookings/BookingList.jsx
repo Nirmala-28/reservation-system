@@ -448,7 +448,7 @@ const BookingList = () => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {booking.segmentInfo && (
+                      {(booking.segmentInfo || booking.algorithmLog?.some(l => l.algorithm === 'SegmentTree')) && (
                         <span style={{ 
                           fontSize: '0.7rem', 
                           background: '#e0f2fe', 
@@ -462,7 +462,7 @@ const BookingList = () => {
                           Segment Tree
                         </span>
                       )}
-                      {booking.roundRobinData && (
+                      {(booking.roundRobinData || booking.algorithmLog?.some(l => l.algorithm === 'RoundRobin')) && (
                         <span style={{ 
                           fontSize: '0.7rem', 
                           background: '#fef3c7', 
@@ -476,7 +476,7 @@ const BookingList = () => {
                           Round Robin
                         </span>
                       )}
-                      {booking.status?.toLowerCase() === 'waiting' && (
+                      {(booking.status?.toLowerCase() === 'waiting' || booking.algorithmLog?.some(l => l.algorithm === 'PriorityQueue')) && (
                         <span style={{ 
                           fontSize: '0.7rem', 
                           background: '#fce7f3', 
@@ -488,6 +488,20 @@ const BookingList = () => {
                           width: 'fit-content'
                         }}>
                           Priority Queue
+                        </span>
+                      )}
+                      {booking.algorithmLog?.some(l => l.algorithm === 'Dijkstra') && (
+                        <span style={{ 
+                          fontSize: '0.7rem', 
+                          background: '#dcfce7', 
+                          color: '#15803d',
+                          padding: '2px 6px',
+                          borderRadius: '10px',
+                          fontWeight: '600',
+                          display: 'inline-block',
+                          width: 'fit-content'
+                        }}>
+                          Dijkstra
                         </span>
                       )}
                     </div>
