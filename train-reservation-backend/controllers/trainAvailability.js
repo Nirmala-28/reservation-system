@@ -1,6 +1,7 @@
 // trainAvailability.js
 const TrainAvailability = require('../models/TrainAvailability');
 const Train = require('../models/Train');
+const TravelInventory = require('../models/TravelInventory');
 const DijkstraSolver = require('../utils/dijkstra');
 
 // @desc    Get all train availabilities
@@ -9,9 +10,30 @@ const DijkstraSolver = require('../utils/dijkstra');
 exports.getTrainAvailabilities = async (req, res) => {
   try {
     const availabilities = await TrainAvailability.find();
+
+    // Filter out stale/expired train schedules:
+    // - Non-Everyday trains: remove if departureDate is in the past
+    // - Everyday trains: remove if departureDate is more than 7 days old
+    //   (they should be updated by the admin; old records are stale duplicates)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const active = availabilities.filter(train => {
+      if (!train.departureDate) return true;
+      const trainDate = new Date(train.departureDate);
+      if (train.runDays === 'Everyday') {
+        // Keep Everyday trains only if their schedule date is recent (within last 7 days or future)
+        return trainDate >= sevenDaysAgo;
+      }
+      // Non-recurring: only future trains
+      return trainDate >= today;
+    });
+
     res.status(200).json({
       success: true,
-      data: availabilities,
+      data: active,
     });
   } catch (error) {
     res.status(400).json({ 
@@ -51,15 +73,78 @@ exports.searchTrains = async (req, res) => {
   try {
     const { departureStation, arrivalStation, departureDate } = req.body;
     
+    // Find trains matching the stations
     let availabilities = await TrainAvailability.find({
       departureStation: new RegExp(departureStation, 'i'),
       arrivalStation: new RegExp(arrivalStation, 'i'),
-      departureDate,
     });
+
+    // Optionally filter by departureDate taking into account runDays='Everyday'
+    if (departureDate) {
+      availabilities = availabilities.filter(train => {
+        return train.runDays === 'Everyday' || train.departureDate === departureDate;
+      });
+    }
+
+    // Filter out expired trains — non-recurring trains whose date has already passed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    availabilities = availabilities.filter(train => {
+      if (train.runDays === 'Everyday') return true; // recurring trains never expire
+      if (!train.departureDate) return true;
+      const trainDate = new Date(train.departureDate);
+      return trainDate >= today;
+    });
+
+    // For Everyday trains, override the stored departureDate with the user's searched date
+    // so the UI shows the correct travel date instead of the old DB date
+    const searchedDate = departureDate || new Date().toISOString().split('T')[0];
+    availabilities = availabilities.map(train => {
+      const obj = train.toObject ? train.toObject() : { ...train };
+      if (train.runDays === 'Everyday') {
+        obj.departureDate = searchedDate;
+        // Compute arrivalDate = searchedDate + (original arrival offset days)
+        if (train.departureDate && train.arrivalDate) {
+          const origDep = new Date(train.departureDate);
+          const origArr = new Date(train.arrivalDate);
+          const diffDays = Math.round((origArr - origDep) / (1000 * 60 * 60 * 24));
+          const newArr = new Date(searchedDate);
+          newArr.setDate(newArr.getDate() + diffDays);
+          obj.arrivalDate = newArr.toISOString().split('T')[0];
+        }
+      }
+      return obj;
+    });
+
+    // Overlay date-specific inventory when a booking has already created it.
+    // The schedule's fare options remain the admin-configured capacity.
+    const inventories = await TravelInventory.find({
+      trainAvailability: { $in: availabilities.map(train => train._id) },
+      travelDate: searchedDate,
+    });
+    const inventoryByClass = new Map(
+      inventories.map(item => [`${item.trainAvailability}:${item.classInfo}`, item.availableSeats])
+    );
+    availabilities = availabilities.map(train => ({
+      ...train,
+      fareOptions: (train.fareOptions || []).map(fare => ({
+        ...fare,
+        availableSeats: inventoryByClass.get(`${train._id}:${fare.class}`) ?? fare.availableSeats,
+      })),
+    }));
 
     // Apply Round Robin metrics to all direct results
     availabilities.forEach(availability => {
-      availability.updateMetrics();
+      if (availability.updateMetrics) availability.updateMetrics();
+    });
+
+    // Filter out trains that are completely full (all fare classes have 0 available seats
+    // AND 0 waitingList capacity). These trains cannot accept any new passengers.
+    availabilities = availabilities.filter(train => {
+      if (!train.fareOptions || train.fareOptions.length === 0) return true;
+      return train.fareOptions.some(fare => 
+        (fare.availableSeats > 0) || (fare.waitingList !== undefined && fare.waitingList >= 0)
+      );
     });
 
     // -------------------------------------------------------------------
@@ -195,15 +280,16 @@ exports.processBookingQueue = async (req, res) => {
       });
     }
 
-    // Process with Round Robin algorithm
-    const allocationResult = availability.allocateSlotRoundRobin();
+    // Process queued booking requests fairly. Seat confirmation itself is
+    // controlled by date-specific inventory, not by an artificial time slot.
+    const processedBookings = availability.processBookingsRoundRobin();
     availability.updateMetrics();
     await availability.save();
     
     res.status(200).json({
       success: true,
       algorithm: 'Round Robin',
-      allocationResult: allocationResult,
+      allocationResult: { success: true, processedBookings },
       metrics: availability.metrics,
       message: 'Queue processed successfully using Round Robin algorithm'
     });

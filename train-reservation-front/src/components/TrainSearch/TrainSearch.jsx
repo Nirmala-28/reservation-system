@@ -164,10 +164,16 @@ const TrainSearch = () => {
           tomorrow.setDate(tomorrow.getDate() + 1);
           return tomorrow;
         })();
+
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
     
     for (let i = -2; i <= 3; i++) {
       const date = new Date(currentDate);
       date.setDate(date.getDate() + i);
+
+      const dateMidnight = new Date(date);
+      dateMidnight.setHours(0, 0, 0, 0);
       
       const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 3);
       const dayNum = date.getDate();
@@ -176,7 +182,8 @@ const TrainSearch = () => {
       dates.push({
         full: date.toISOString().split('T')[0],
         display: `${dayName} ${dayNum}`,
-        month: month
+        month: month,
+        isPast: dateMidnight < todayMidnight
       });
     }
     
@@ -323,12 +330,13 @@ const TrainSearch = () => {
             {dateOptions.map((date, index) => (
               <motion.div 
                 key={index} 
-                className={`${styles.date} ${date.full === searchParams.departureDate ? styles.activeDate : ''}`}
-                whileHover={{ scale: 1.05 }}
+                className={`${styles.date} ${date.full === searchParams.departureDate ? styles.activeDate : ''} ${date.isPast ? styles.pastDate : ''}`}
+                whileHover={date.isPast ? {} : { scale: 1.05 }}
                 initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5 + index * 0.05 }}
-                onClick={() => handleDateChange(date.full)}
+                onClick={() => !date.isPast && handleDateChange(date.full)}
+                title={date.isPast ? 'Cannot select a past date' : ''}
               >
                 <div className={styles.dateDay}>{date.display.split(' ')[0]}</div>
                 <div className={styles.dateNumber}>{date.display.split(' ')[1]}</div>
@@ -435,18 +443,29 @@ const TrainSearch = () => {
                 whileHover={{ y: -5 }}
                 layout
               >
-                <div className={styles.trainHeader}>
-                  <h4 className={styles.trainName}>{train.trainNumber} - {train.trainName}</h4>
-                  <motion.div 
-                    className={styles.trainRating}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    {train.rating} ★
-                  </motion.div>
-                  <div className={styles.systemBadge}>
-                    ⚡ Optimized
+              {(() => {
+                const isTrainFull = train.fareOptions && train.fareOptions.length > 0 &&
+                  train.fareOptions.every(f => f.availableSeats === 0 || f.availableSeats === undefined);
+                const hasWaitlistCapacity = train.fareOptions?.some(f => Number(f.waitingList || 0) > 0);
+                return (
+                  <>
+                  <div className={styles.trainHeader}>
+                    <h4 className={styles.trainName}>{train.trainNumber} - {train.trainName}</h4>
+                    <motion.div 
+                      className={styles.trainRating}
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      {train.rating} ★
+                    </motion.div>
+                    {isTrainFull && hasWaitlistCapacity && (
+                      <div style={{ background: '#f59e0b', color: 'white', padding: '4px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>
+                        ⏳ Waitlist Available
+                      </div>
+                    )}
+                    <div className={styles.systemBadge}>
+                      ⚡ Optimized
+                    </div>
                   </div>
-                </div>
                 
                 <div className={styles.trainDetails}>
                   <div className={styles.timing}>
@@ -457,7 +476,7 @@ const TrainSearch = () => {
                     >
                       <div className={styles.time}>{train.departureTime}</div>
                       <div className={styles.station}>{train.departureStation}</div>
-                      <div className={styles.date}>{train.departureDate}</div>
+                      <div className={styles.trainDate}>{train.departureDate ? new Date(train.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</div>
                     </motion.div>
                     
                     <div className={styles.durationContainer}>
@@ -478,7 +497,7 @@ const TrainSearch = () => {
                     >
                       <div className={styles.time}>{train.arrivalTime}</div>
                       <div className={styles.station}>{train.arrivalStation}</div>
-                      <div className={styles.date}>{train.arrivalDate}</div>
+                      <div className={styles.trainDate}>{train.arrivalDate ? new Date(train.arrivalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</div>
                     </motion.div>
                   </div>
                   
@@ -540,14 +559,19 @@ const TrainSearch = () => {
                     </motion.button>
                     <motion.button 
                       className={styles.bookBtn}
+                      style={isTrainFull && hasWaitlistCapacity ? { background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: 'white' } : {}}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleBookNow(train)}
+                      disabled={isTrainFull && !hasWaitlistCapacity}
                     >
-                      Book Now
+                      {isTrainFull ? '⏳ Join Waitlist' : 'Book Now'}
                     </motion.button>
                   </div>
                 </div>
+                </>
+                );
+              })()}
               </motion.div>
             );
           })
@@ -567,7 +591,7 @@ const TrainSearch = () => {
                   </div>
                   <div>
                     <h3 style={{ margin: 0, color: '#1e293b', fontSize: '1.25rem' }}>No direct trains found</h3>
-                    <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.95rem' }}>We found an optimal connecting route using Dijkstra's Algorithm ({dijkstraData.totalDurationMinutes} min total travel time)</p>
+                    <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.95rem' }}>Dijkstra recommends this shortest connecting route ({dijkstraData.totalDurationMinutes} min travel time). Each leg must be booked separately.</p>
                   </div>
                 </div>
                 

@@ -1,114 +1,69 @@
-# 🚂 Train Reservation System
+# Train Reservation System
 
-A full-stack train reservation and management system developed as a **Final Year Project**. The system is composed of a backend REST API (Node.js/Express/MongoDB), a customer-facing frontend (React), and an admin-facing dashboard (React).
+Full-stack final-year project for railway search, booking, waitlists, meals,
+coupons, QR tickets, and admin schedule management.
 
----
+## Applications
 
-## 📁 Project Structure
+| Application | Purpose | Default URL |
+| --- | --- | --- |
+| `train-reservation-backend` | Express/MongoDB REST API | `http://localhost:5000` |
+| `train-reservation-front` | Customer booking application | `http://localhost:5173` |
+| `train-reservation-dashboard` | Admin dashboard | `http://localhost:5174` |
 
-```
-reservation-system/
-├── train-reservation-backend/     # REST API Server (Node.js + Express + MongoDB)
-├── train-reservation-dashboard/   # Admin Dashboard (React + Vite)
-└── train-reservation-front/       # Customer Frontend (React + Vite)
-```
+## Algorithm workflow
 
----
+The algorithms are part of the backend booking flow, not only visual demos.
 
-## 🔧 Tech Stack
+- **Segment Tree:** Builds one segment tree per physical seat for a travel date
+  and fare class. It assigns a seat such as `1A-1` only when that seat is free
+  across the requested route segment. A seat may be reused on a
+  non-overlapping segment.
+- **Priority Queue / Max-Heap:** A full class with a positive admin-configured
+  waitlist capacity creates `Waiting` bookings. On a confirmed booking
+  cancellation, the highest-priority waitlisted booking for the same train,
+  class, and travel date is promoted; seniors receive priority and equal
+  priorities use FIFO order.
+- **Dijkstra:** If no direct train exists, search returns the shortest
+  duration-based connecting-route recommendation. Each leg is currently
+  booked separately.
+- **Round Robin:** Records and processes booking-request queue work using the
+  configured time quantum. Seat confirmation remains controlled by inventory,
+  not by a Round Robin time slot.
 
-| Layer       | Technology           |
-|-------------|----------------------|
-| Backend     | Node.js, Express.js  |
-| Database    | MongoDB, Mongoose    |
-| Frontend    | React, Vite          |
-| Dashboard   | React, Vite, Chart.js|
-| Auth        | JWT Tokens           |
-| Email       | Nodemailer           |
-| Styling     | CSS Modules          |
+Availability is stored per **schedule + travel date + fare class**, preventing
+one day's bookings from changing another day's availability. Seat reservation
+uses a conditional atomic update to prevent concurrent overselling.
 
----
+### Algorithm summary
 
-## 🧠 Algorithms Implemented
+| Algorithm | Problem solved | Live usage |
+| --- | --- | --- |
+| Segment Tree | Prevents the same physical seat being used on overlapping route segments. | Assigns segment-safe seats during booking. |
+| Priority Queue | Picks the fairest passenger after a seat is released. | Promotes waitlisted bookings after cancellation. |
+| Dijkstra | Suggests a connection when no direct route exists. | Train-search fallback. |
+| Round Robin | Demonstrates fair processing of booking queue work. | Schedule booking queue and metrics. |
 
-This system integrates **four computer science algorithms** to demonstrate academic relevance:
+## Setup
 
-### 1. ⚙️ Round Robin (Server Request Scheduling)
-- **Problem Solved**: High concurrency during peak booking seasons can cause server starvation if one large booking monopolizes the CPU.
-- **How it's Used**: When users click "Confirm Booking", their requests are placed into a queue. The server allocates a fair "time quantum" to process each booking in a circular order.
-- **Where it's Used**: Live in the Booking Engine (`controllers/bookings.js` → `createBooking`) and `models/TrainAvailability.js`.
+Prerequisites: Node.js 18+ and MongoDB.
 
----
+### 1. Start MongoDB
 
-### 2. 📍 Dijkstra's Algorithm (Smart Route Optimization)
-- **Problem Solved**: Passengers want to travel from Station A to Station B, but no direct train exists. Standard systems return "0 results".
-- **How it's Used**: When a user searches for a train, if 0 direct routes are found, the backend automatically builds a weighted graph of all available train schedules. Dijkstra calculates the absolute fastest multi-hop connecting route (e.g., Kathmandu → Nepalgunj → Surkhet).
-- **Where it's Used**: Live in the Search API (`controllers/trainAvailability.js` → `searchTrains`) and visually displayed on the Customer Frontend (`TrainSearch.jsx`).
+Start your local MongoDB service, or use a MongoDB Atlas connection string in
+the backend `.env` file.
 
----
-
-### 3. 👑 Priority Queue / Max-Heap (Intelligent Waitlist Management)
-- **Problem Solved**: When a passenger cancels a ticket, the newly freed seat must be given to a waitlisted passenger. It must be fair and respect priorities (e.g., Senior Citizens).
-- **How it's Used**: When a cancellation occurs, the system fetches all `Waiting` passengers, loads them into a Max-Heap Priority Queue, and auto-promotes the highest priority passenger (e.g., Age 60+ gets higher priority score, FIFO for ties) to `Confirmed` status.
-- **Where it's Used**: Live in the Cancellation API (`controllers/bookings.js` → `cancelBooking`).
-
----
-
-### 4. 🌲 Segment Tree (Advanced Seat Allocation)
-- **Problem Solved**: A train travels from Stop 1 → 2 → 3 → 4. If someone books Seat A from Stop 1 to 2, that physical seat is empty from 2 to 4. A standard booking system wastes this seat.
-- **How it's Used**: The route is mapped into segments. Before confirming a ticket, the API queries the Segment Tree to check if the specific physical seat is free for that exact portion of the journey. If it's free, it allows the booking. If someone else is sitting there during *any overlapping part* of their trip, it blocks it to prevent double-booking.
-- **Where it's Used**: Live in the Booking API (`controllers/bookings.js` → `createBooking`).
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js v18+
-- MongoDB (local or Atlas)
-- npm or yarn
-
----
-
-### Backend Setup
+### 2. Start the backend API
 
 ```bash
 cd train-reservation-backend
 npm install
-```
-
-Create a `.env` file in `train-reservation-backend/` with:
-
-```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/train-reservation
-JWT_SECRET=your_jwt_secret_here
-FRONTEND_URL=http://localhost:5173
-DASHBOARD_URL=http://localhost:5174
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_email_password
-```
-
-Start the server:
-```bash
 npm run dev
 ```
 
----
+The API starts at `http://localhost:5000`.
 
-### Admin Dashboard Setup
-
-```bash
-cd train-reservation-dashboard
-npm install
-npm run dev
-```
-
-Dashboard runs at: `http://localhost:5174`
-
----
-
-### Customer Frontend Setup
+### 3. Start the customer frontend
 
 ```bash
 cd train-reservation-front
@@ -116,68 +71,78 @@ npm install
 npm run dev
 ```
 
-Frontend runs at: `http://localhost:5173`
+The customer application starts at `http://localhost:5173`.
 
----
+### 4. Start the admin dashboard
 
-## 🌐 API Endpoints
+```bash
 
-### Authentication
-| Method | Endpoint          | Description         |
-|--------|-------------------|---------------------|
-| POST   | `/api/auth/login` | User login (JWT)    |
+cd train-reservation-dashboard
+npm install
+npm run dev
+```
 
-### Trains
-| Method | Endpoint             | Description         |
-|--------|----------------------|---------------------|
-| GET    | `/api/trains`        | Get all trains      |
-| POST   | `/api/admin/trains`  | Create train        |
-| PUT    | `/api/admin/trains/:id` | Update train     |
-| DELETE | `/api/admin/trains/:id` | Delete train     |
+The dashboard starts at `http://localhost:5174`.
 
-### Scheduling
-| Method | Endpoint                    | Description         |
-|--------|-----------------------------|---------------------|
-| GET    | `/api/train-availability`   | Get all schedules   |
-| POST   | `/api/train-availability`   | Create schedule     |
+Create `train-reservation-backend/.env` with at least:
 
-### Algorithms
-| Method | Endpoint                                   | Description                        |
-|--------|--------------------------------------------|------------------------------------|
-| GET    | `/api/algorithm/demo`                      | Round Robin demonstration           |
-| POST   | `/api/algorithm/analyze`                   | Run Round Robin performance analysis |
-| GET    | `/api/algorithm/config`                    | Round Robin configuration guide     |
-| POST   | `/api/algorithm/dijkstra/solve`            | Dijkstra shortest path solver       |
-| POST   | `/api/algorithm/priority-queue/simulate`   | Priority Queue heap simulation      |
-| POST   | `/api/algorithm/segment-tree/query`        | Segment Tree seat range query       |
+```env
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/train-reservation
+JWT_SECRET=replace_with_a_secret
+FRONTEND_URL=http://localhost:5173
+DASHBOARD_URL=http://localhost:5174
+```
 
-### Health
-| Method | Endpoint        | Description      |
-|--------|-----------------|------------------|
-| GET    | `/api/health`   | API health check |
+## Main API endpoints
 
----
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/api/auth/register` | Register a customer account |
+| POST | `/api/auth/login` | Sign in and receive a JWT |
+| POST | `/api/train-availability/search` | Search direct trains or get a Dijkstra recommendation |
+| GET | `/api/train-availability` | List train schedules |
+| POST | `/api/bookings` | Create a confirmed or waitlisted booking |
+| GET | `/api/bookings/my-bookings` | Get the signed-in customer's bookings |
+| PUT | `/api/bookings/:id/cancel` | Cancel a booking and run waitlist promotion |
+| PUT | `/api/bookings/:id/payment` | Update mock payment completion |
+| GET | `/api/bookings/pnr/:pnr` | Look up a booking by PNR |
+| POST | `/api/admin/trains` | Admin: create a train |
+| POST | `/api/admin/train-availability` | Admin: create a schedule |
+| GET | `/api/admin/bookings` | Admin: view all bookings |
+| GET | `/api/health` | API health check |
 
-## 📊 Admin Dashboard Features
+Admin routes require the `admin` role. Customer booking routes require a JWT
+in the `Authorization: Bearer <token>` header.
 
-- **Train Management** – Add, edit, delete trains with facilities
-- **Scheduling** – Round Robin-powered train availability scheduling
-- **Meals** – Manage onboard meal options per train
-- **Coupons** – Create and manage discount coupons
-- **Bookings** – View and manage customer bookings
-- **Statistics** – Revenue, booking, and performance charts
-- **🎓 Algorithms Playground** – Interactive visualizers for all 4 algorithms:
-  - Dijkstra Route Solver
-  - Priority Queue Heap Waitlist
-  - Segment Tree Seat Allocator
+## Payments
+
+The project uses mock payment completion for demonstration. Do not use it for
+real transactions without enabling and verifying the Stripe or PayPal server
+integration with provider credentials and webhooks.
+
+## Verification
+
+```bash
+cd train-reservation-backend
+npm test
+
+cd ../train-reservation-front
+npm run build
+
+cd ../train-reservation-dashboard
+npm run build
+```
 
 ---
 
 ## 👩‍💻 Developer
 
-**Nirmala Chapagain**
+**Nirmala Chapagain**  
 Final Year Project — Computer Science
 
 ---
 
-> This project demonstrates real-world application of computer science algorithms (Round Robin, Dijkstra, Priority Queue, Segment Tree) in a railway reservation system context.
+> This project demonstrates the real-world application of computer science
+> algorithms—Round Robin, Dijkstra, Priority Queue, and Segment Tree—in a
+> railway reservation system.

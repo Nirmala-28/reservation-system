@@ -8,6 +8,7 @@ const generatePNR = require('../utils/generatePNR');
 const generateQRCode = require('../utils/generateQRCode');
 const SegmentTree = require('../utils/segmentTree');
 const PriorityQueue = require('../utils/priorityQueue');
+const { dateRange, getOrCreateInventory, reserveSeats, releaseSeats } = require('../utils/travelInventory');
 
 // @desc    Create booking
 // @route   POST /api/bookings
@@ -37,29 +38,35 @@ exports.createBooking = async (req, res) => {
     // Find train availability record (not basic train)
     const trainAvailability = await TrainAvailability.findById(trainId);
     if (!trainAvailability) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Train availability not found' 
+        message: 'Train availability not found'
       });
     }
 
     // Find the basic train info
     const train = await Train.findOne({ trainNumber: trainAvailability.trainNumber });
     if (!train) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Train not found' 
+        message: 'Train not found'
       });
     }
 
     // Check if selected class is available
     const selectedClass = trainAvailability.fareOptions.find(option => option.class === classInfo);
     if (!selectedClass) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Selected class not available' 
+        message: 'Selected class not available'
       });
     }
+
+    // Availability is date-specific. A schedule's fare option is capacity,
+    // while TravelInventory records the remaining seats for each travel date.
+    const travelDateRange = dateRange(travelDate);
+    const inventory = await getOrCreateInventory(trainAvailability, selectedClass, travelDate);
+    let isWaitlistBooking = inventory.availableSeats < passengers.length;
 
     // -----------------------------------------------------------------
     // ALGORITHM 1: SEGMENT TREE — Partial-Route Seat Availability Check
@@ -71,11 +78,12 @@ exports.createBooking = async (req, res) => {
     // seat to be reused by two passengers on non-overlapping sub-routes.
     // -----------------------------------------------------------------
     let segStartIdx = 0;
-    let segEndIdx   = 1;
+    let segEndIdx = 1;
+    let assignedSeats = [];
     let segmentTreeResult = 'skipped — no stopsList defined on this schedule';
 
     const stops = trainAvailability.stopsList || [];
-    if (stops.length >= 2) {
+    if (!isWaitlistBooking && stops.length >= 2) {
       // Find index of departure and arrival station in the stops list
       const depIdx = stops.findIndex(s =>
         s.toLowerCase().includes(trainAvailability.departureStation.toLowerCase())
@@ -86,27 +94,46 @@ exports.createBooking = async (req, res) => {
 
       // Use found indices or default to full route (0 → stops.length-1)
       segStartIdx = depIdx >= 0 ? depIdx : 0;
-      segEndIdx   = arrIdx >= 0 ? arrIdx : stops.length - 1;
+      segEndIdx = arrIdx >= 0 ? arrIdx : stops.length - 1;
 
       // Build a per-class Segment Tree from confirmed bookings on this schedule
       const confirmedBookings = await Booking.find({
         trainAvailability: trainAvailability._id,
         classInfo: classInfo,
-        status: { $in: ['Confirmed', 'Pending'] }
-      }).select('segmentInfo passengers');
+        status: { $in: ['Confirmed', 'Pending'] },
+        travelDate: { $gte: travelDateRange.start, $lt: travelDateRange.end }
+      }).select('segmentInfo passengers').sort({ createdAt: 1 });
 
-      const tree = new SegmentTree(stops.length - 1);
+      const classCapacity = Number(selectedClass.totalSeats || selectedClass.availableSeats || 0);
+      const seatTrees = Array.from(
+        { length: classCapacity },
+        () => new SegmentTree(stops.length - 1)
+      );
 
       // Mark each confirmed booking's segment as occupied
       confirmedBookings.forEach(b => {
         const { startStopIndex, endStopIndex } = b.segmentInfo || {};
         if (startStopIndex != null && endStopIndex != null && endStopIndex > startStopIndex) {
-          tree.bookSegment(startStopIndex, endStopIndex);
+          b.passengers.forEach(passenger => {
+            const parsedSeat = Number(String(passenger.seat || '').split('-').pop());
+            const storedSeatIndex = Number.isInteger(parsedSeat) && parsedSeat >= 1 && parsedSeat <= classCapacity
+              ? parsedSeat - 1
+              : -1;
+            const tree = storedSeatIndex >= 0
+              ? seatTrees[storedSeatIndex]
+              : seatTrees.find(candidate => candidate.isSegmentFree(startStopIndex, endStopIndex));
+            if (tree) tree.bookSegment(startStopIndex, endStopIndex);
+          });
         }
       });
 
-      // Query whether our requested segment [segStartIdx, segEndIdx] is free
-      const segFree = tree.isSegmentFree(segStartIdx, segEndIdx);
+      const freeSeatIndexes = seatTrees
+        .map((tree, index) => tree.isSegmentFree(segStartIdx, segEndIdx) ? index : -1)
+        .filter(index => index >= 0);
+      const segFree = freeSeatIndexes.length >= passengers.length;
+      assignedSeats = freeSeatIndexes
+        .slice(0, passengers.length)
+        .map(index => `${classInfo}-${index + 1}`);
 
       if (!segFree) {
         segmentTreeResult = `CONFLICT — segment [${segStartIdx}, ${segEndIdx}] is occupied`;
@@ -123,15 +150,6 @@ exports.createBooking = async (req, res) => {
       console.log(`[Segment Tree] ${segmentTreeResult}`);
     }
 
-    // Check seat count availability (existing check)
-    if (selectedClass.availableSeats < passengers.length) {
-      return res.status(400).json({ 
-        success: false,
-        message: `Only ${selectedClass.availableSeats} seats available in ${classInfo}` 
-      });
-    }
-
-
     // -----------------------------------------------------------------
     // Calculate priority score for this booking (used by Priority Queue
     // if this passenger ever ends up on a waitlist)
@@ -142,11 +160,11 @@ exports.createBooking = async (req, res) => {
 
     // Calculate base fare — strip all non-numeric chars (₹, Rs, commas, spaces) except decimal
     const baseFare = parseFloat(String(selectedClass.price).replace(/[^0-9.]/g, '')) * passengers.length;
-    
+
     // Calculate meal prices
     let mealTotal = 0;
     const meals = [];
-    
+
     if (mealSelections && mealSelections.length > 0) {
       for (const selection of mealSelections) {
         const meal = await Meal.findById(selection.mealId);
@@ -161,12 +179,12 @@ exports.createBooking = async (req, res) => {
     }
 
     // Calculate charges
-    const reservationCharges = 40;
-    const superfastCharges = 75;
-    const gstAmount = (baseFare + reservationCharges + superfastCharges) * 0.05;
-    
-    let subtotal = baseFare + reservationCharges + superfastCharges + gstAmount + mealTotal;
-    
+    const reservationCharges = 40 * passengers.length;
+    const superfastCharges = 75 * passengers.length;
+    const vatAmount = (baseFare + reservationCharges + superfastCharges) * 0.13;
+
+    let subtotal = baseFare + reservationCharges + superfastCharges + vatAmount + mealTotal;
+
     // Apply coupon if provided
     let discountAmount = 0;
     if (couponCode) {
@@ -174,26 +192,26 @@ exports.createBooking = async (req, res) => {
       if (coupon) {
         // Check if coupon is valid
         if (coupon.validTo && new Date(coupon.validTo) < new Date()) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             success: false,
-            message: 'Coupon has expired' 
+            message: 'Coupon has expired'
           });
         }
-        
+
         if (coupon.usedCount >= coupon.usageLimit) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             success: false,
-            message: 'Coupon usage limit exceeded' 
+            message: 'Coupon usage limit exceeded'
           });
         }
-        
+
         if (subtotal < coupon.minOrderValue) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             success: false,
-            message: `Minimum order value for this coupon is Rs.${coupon.minOrderValue}` 
+            message: `Minimum order value for this coupon is Rs.${coupon.minOrderValue}`
           });
         }
-        
+
         if (coupon.discountType === 'percentage') {
           discountAmount = (subtotal * coupon.discountValue) / 100;
           if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
@@ -202,7 +220,7 @@ exports.createBooking = async (req, res) => {
         } else {
           discountAmount = coupon.discountValue;
         }
-        
+
         // Update coupon usage
         coupon.usedCount += 1;
         await coupon.save();
@@ -211,8 +229,45 @@ exports.createBooking = async (req, res) => {
 
     const totalAmount = subtotal - discountAmount;
 
+    // Reserve seats only after all validations (including coupon checks) have
+    // passed. This conditional update prevents concurrent overselling.
+    if (!isWaitlistBooking) {
+      const reservedInventory = await reserveSeats(
+        trainAvailability,
+        selectedClass,
+        travelDate,
+        passengers.length
+      );
+      isWaitlistBooking = !reservedInventory;
+    }
+
     // Generate PNR
     const pnr = generatePNR();
+
+    let waitlistPosition = null;
+    if (isWaitlistBooking) {
+      const waitlistStats = await Booking.aggregate([
+        {
+          $match: {
+            trainAvailability: trainAvailability._id,
+            classInfo,
+            status: 'Waiting',
+            travelDate: { $gte: travelDateRange.start, $lt: travelDateRange.end },
+          },
+        },
+        { $project: { passengerCount: { $size: '$passengers' } } },
+        { $group: { _id: null, passengers: { $sum: '$passengerCount' }, bookings: { $sum: 1 } } },
+      ]);
+      const waitingPassengers = waitlistStats[0]?.passengers || 0;
+      const maxWaitlist = Number(selectedClass.waitingList || 0);
+      if (waitingPassengers + passengers.length > maxWaitlist) {
+        return res.status(400).json({
+          success: false,
+          message: `Waitlist is full for ${classInfo}`,
+        });
+      }
+      waitlistPosition = waitingPassengers + 1;
+    }
 
     // Create booking
     const booking = new Booking({
@@ -222,12 +277,13 @@ exports.createBooking = async (req, res) => {
       pnr,
       classInfo,
       priorityScore,
+      waitlistPosition,
       segmentInfo: { startStopIndex: segStartIdx, endStopIndex: segEndIdx },
-      passengers: passengers.map(p => ({
+      passengers: passengers.map((p, index) => ({
         name: p.name,
         age: parseInt(p.age),
         gender: p.gender,
-        seat: p.seat || '',
+        seat: assignedSeats[index] || p.seat || '',
         berthPreference: p.berthPreference || 'No Preference'
       })),
       meals,
@@ -243,22 +299,48 @@ exports.createBooking = async (req, res) => {
       },
       travelDate: new Date(travelDate),
       contactInfo: contactInfo,
-      status: 'Pending',
+      status: isWaitlistBooking ? 'Waiting' : 'Pending',
       algorithmLog: [
         {
           algorithm: 'SegmentTree',
           action: 'seat_check',
           result: segmentTreeResult,
-        }
+        },
+        ...(isWaitlistBooking ? [{
+          algorithm: 'PriorityQueue',
+          action: 'waitlisted',
+          result: `Added to waitlist at position ${waitlistPosition}. Priority score: ${priorityScore}.`,
+        }] : [])
       ]
     });
 
 
-    await booking.save();
+    try {
+      await booking.save();
+    } catch (error) {
+      // Do not leave a reserved seat behind if persistence fails (for example,
+      // a duplicate PNR or database validation error).
+      if (!isWaitlistBooking) {
+        await releaseSeats(trainAvailability, classInfo, travelDate, passengers.length);
+      }
+      throw error;
+    }
 
-    // Update seat availability (reduce available seats)
-    selectedClass.availableSeats -= passengers.length;
-    await trainAvailability.save();
+    // Waitlisted passengers do not occupy a seat or enter the allocation
+    // queue. They are promoted by the Priority Queue when a seat is freed.
+    if (isWaitlistBooking) {
+      return res.status(201).json({
+        success: true,
+        booking: booking._id,
+        totalAmount: totalAmount.toFixed(2),
+        pnr,
+        waitlistPosition,
+        algorithms: {
+          priorityQueue: `Added to waitlist at position ${waitlistPosition}`,
+        },
+        message: `Added to waitlist at position ${waitlistPosition}`
+      });
+    }
 
     // Apply Round Robin algorithm for booking queue
     const bookingData = {
@@ -269,9 +351,10 @@ exports.createBooking = async (req, res) => {
     };
 
     trainAvailability.bookingQueue.push(bookingData);
-    
-    // Process with Round Robin algorithm
+
+    // Record fair request processing separately from seat availability.
     const allocationResult = trainAvailability.allocateSlotRoundRobin();
+    const processedBookings = trainAvailability.processBookingsRoundRobin();
     trainAvailability.updateMetrics();
     await trainAvailability.save();
 
@@ -284,7 +367,7 @@ exports.createBooking = async (req, res) => {
       passenger: passengers[0].name,
       class: classInfo,
     };
-    
+
     const qrCode = await generateQRCode(qrData);
     // Push Round Robin log entry
     booking.algorithmLog.push({
@@ -321,16 +404,16 @@ exports.createBooking = async (req, res) => {
       qrCode,
       algorithms: {
         segmentTree: segmentTreeResult,
-        roundRobin: allocationResult,
+        roundRobin: { ...allocationResult, processedBookings },
       },
       message: 'Booking confirmed — verified by Segment Tree + allocated via Round Robin'
     });
 
   } catch (error) {
     console.error('Booking creation error:', error);
-    res.status(400).json({ 
+    res.status(400).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -352,9 +435,9 @@ exports.getMyBookings = async (req, res) => {
       data: bookings,
     });
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -370,17 +453,17 @@ exports.getBooking = async (req, res) => {
       .populate('meals.meal');
 
     if (!booking) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Booking not found' 
+        message: 'Booking not found'
       });
     }
 
     // Check if user owns this booking
     if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: 'Not authorized to access this booking' 
+        message: 'Not authorized to access this booking'
       });
     }
 
@@ -389,9 +472,9 @@ exports.getBooking = async (req, res) => {
       data: booking,
     });
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -405,42 +488,45 @@ exports.cancelBooking = async (req, res) => {
       .populate('trainAvailability');
 
     if (!booking) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Booking not found' 
+        message: 'Booking not found'
       });
     }
 
     // Check if user owns this booking
     if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: 'Not authorized to cancel this booking' 
+        message: 'Not authorized to cancel this booking'
       });
     }
 
     // Check if booking can be cancelled
     if (booking.status === 'Cancelled') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Booking is already cancelled' 
+        message: 'Booking is already cancelled'
       });
     }
+
+    const releasedConfirmedSeat = ['Confirmed', 'Pending'].includes(booking.status);
 
     // Update booking status
     booking.status = 'Cancelled';
     await booking.save();
 
+    let availabilityToUpdate = null;
+
     // Restore seat availability
-    if (booking.trainAvailability) {
-      const trainAvailability = await TrainAvailability.findById(booking.trainAvailability._id);
-      if (trainAvailability) {
-        const classOption = trainAvailability.fareOptions.find(option => option.class === booking.classInfo);
-        if (classOption) {
-          classOption.availableSeats += booking.passengers.length;
-          await trainAvailability.save();
-        }
-      }
+    if (releasedConfirmedSeat && booking.trainAvailability) {
+      availabilityToUpdate = await TrainAvailability.findById(booking.trainAvailability._id || booking.trainAvailability);
+      if (availabilityToUpdate) await releaseSeats(
+        availabilityToUpdate,
+        booking.classInfo,
+        booking.travelDate,
+        booking.passengers.length
+      );
     }
 
     // -----------------------------------------------------------------
@@ -451,11 +537,15 @@ exports.cancelBooking = async (req, res) => {
     // Priority Queue ordered by priorityScore (desc) then bookingDate
     // (FIFO). Promote the top passenger automatically to 'Confirmed'.
     // -----------------------------------------------------------------
-    const waitlistedBookings = await Booking.find({
-      trainAvailability: booking.trainAvailability._id || booking.trainAvailability,
-      classInfo: booking.classInfo,
-      status: 'Waiting'
-    }).sort({ createdAt: 1 }); // pre-sort FIFO as tiebreaker baseline
+    const cancelledTravelDate = dateRange(booking.travelDate);
+    const waitlistedBookings = releasedConfirmedSeat
+      ? await Booking.find({
+          trainAvailability: booking.trainAvailability._id || booking.trainAvailability,
+          classInfo: booking.classInfo,
+          status: 'Waiting',
+          travelDate: { $gte: cancelledTravelDate.start, $lt: cancelledTravelDate.end }
+        }).sort({ createdAt: 1 }) // pre-sort FIFO as tiebreaker baseline
+      : [];
 
     let promotedBooking = null;
     let priorityQueueResult = 'no waitlisted passengers';
@@ -478,7 +568,15 @@ exports.cancelBooking = async (req, res) => {
       const topBookingId = pq.dequeue();
       promotedBooking = await Booking.findById(topBookingId);
 
-      if (promotedBooking) {
+      const promotedClass = availabilityToUpdate?.fareOptions.find(
+        option => option.class === promotedBooking?.classInfo
+      );
+
+      const promotedReservation = promotedBooking && promotedClass
+        ? await reserveSeats(availabilityToUpdate, promotedClass, promotedBooking.travelDate, promotedBooking.passengers.length)
+        : null;
+
+      if (promotedBooking && promotedReservation) {
         promotedBooking.status = 'Confirmed';
         promotedBooking.waitlistPosition = null;
         promotedBooking.algorithmLog = promotedBooking.algorithmLog || [];
@@ -524,9 +622,9 @@ exports.cancelBooking = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -537,28 +635,28 @@ exports.cancelBooking = async (req, res) => {
 exports.updateBookingPayment = async (req, res) => {
   try {
     const { transactionId, status, paymentStatus } = req.body;
-    
+
     const booking = await Booking.findById(req.params.id);
-    
+
     if (!booking) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Booking not found' 
+        message: 'Booking not found'
       });
     }
 
     // Check if user owns this booking
     if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: 'Not authorized to update this booking' 
+        message: 'Not authorized to update this booking'
       });
     }
 
     // Update payment details
     booking.paymentDetails.transactionId = transactionId;
     booking.status = status || booking.status;
-    
+
     if (paymentStatus) {
       booking.paymentDetails.status = paymentStatus;
     }
@@ -571,9 +669,9 @@ exports.updateBookingPayment = async (req, res) => {
       data: booking
     });
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -589,9 +687,9 @@ exports.getBookingByPNR = async (req, res) => {
       .populate('meals.meal');
 
     if (!booking) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Booking not found with this PNR' 
+        message: 'Booking not found with this PNR'
       });
     }
 
@@ -600,9 +698,9 @@ exports.getBookingByPNR = async (req, res) => {
       data: booking,
     });
   } catch (error) {
-    res.status(400).json({ 
+    res.status(400).json({
       success: false,
-      message: error.message 
+      message: error.message
     });
   }
 };

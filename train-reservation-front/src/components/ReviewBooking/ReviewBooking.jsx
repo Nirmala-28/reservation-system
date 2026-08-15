@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 import { 
-  FaUser, FaPhone, FaUtensils, FaTrain, FaRupeeSign, 
+  FaUser, FaPhone, FaUtensils, FaTrain, FaMoneyBillWave, 
   FaEdit, FaCheck, FaChevronDown, FaChevronUp, 
   FaRegClock, FaRegUser, FaRegHeart, FaHeart, 
   FaQrcode, FaShieldAlt, FaPlus, FaMinus, FaTrash,
@@ -11,20 +11,33 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from "./ReviewBooking.module.css";
 import Navbar from "../ReusableComponent/Navbar";
+import { useAuth } from "../../context/AuthContext";
 
 // Constants for fare calculation
 const RESERVATION_CHARGES = 40;
 const SUPERFAST_CHARGES = 75;
-const GST_PERCENTAGE = 5;
+const VAT_PERCENTAGE = 13;
 
 const ReviewBooking = () => {
+  const { user } = useAuth();
+  
   const [expandedSection, setExpandedSection] = useState('traveller');
   const [favoriteTrain, setFavoriteTrain] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  
+  // Pre-fill with logged-in user information if available
   const [travelers, setTravelers] = useState([
-    { name: "", age: "", gender: "Male", nationality: "Indian", berthPreference: "No Preference" }
+    { 
+      name: user?.name || "", 
+      age: "", 
+      gender: "Male", 
+      nationality: "Nepali" 
+    }
   ]);
-  const [contact, setContact] = useState({ mobile: "", email: "" });
+  const [contact, setContact] = useState({ 
+    mobile: user?.phone || "", 
+    email: user?.email || "" 
+  });
   const [meals, setMeals] = useState({});
   const [selectedMeals, setSelectedMeals] = useState({});
   const [mealsLoading, setMealsLoading] = useState(false);
@@ -192,13 +205,9 @@ const ReviewBooking = () => {
   };
 
   const addTraveler = () => {
-    setTravelers([...travelers, { 
-      name: "", 
-      age: "", 
-      gender: "Male", 
-      nationality: "Indian", 
-      berthPreference: "No Preference" 
-    }]);
+    if (travelers.length < 6) {
+      setTravelers([...travelers, { name: "", age: "", gender: "Male", nationality: "Nepali" }]);
+    }
   };
 
   const removeTraveler = (index) => {
@@ -368,12 +377,12 @@ const ReviewBooking = () => {
     
     const basePrice = parsePrice(location.state.selectedFare.price);
     const baseFare = basePrice * travelers.length;
-    const reservationCharges = RESERVATION_CHARGES;
-    const superfastCharges = SUPERFAST_CHARGES;
-    const gstAmount = ((baseFare + reservationCharges + superfastCharges) * GST_PERCENTAGE / 100).toFixed(2);
+    const reservationCharges = RESERVATION_CHARGES * travelers.length;
+    const superfastCharges = SUPERFAST_CHARGES * travelers.length;
+    const vatAmount = ((baseFare + reservationCharges + superfastCharges) * VAT_PERCENTAGE / 100).toFixed(2);
     const mealsPrice = calculateTotalMealsPrice();
     
-    let subtotal = baseFare + reservationCharges + superfastCharges + parseFloat(gstAmount) + mealsPrice;
+    let subtotal = baseFare + reservationCharges + superfastCharges + parseFloat(vatAmount) + mealsPrice;
     
     let discountAmount = 0;
     if (couponDiscount && !withoutCoupon) {
@@ -386,7 +395,7 @@ const ReviewBooking = () => {
       baseFare,
       reservationCharges,
       superfastCharges,
-      gstAmount,
+      vatAmount,
       mealsPrice,
       discountAmount,
       totalAmount
@@ -425,8 +434,8 @@ const ReviewBooking = () => {
         amount: fareBreakdown.superfastCharges.toFixed(2) 
       },
       { 
-        label: `GST (${GST_PERCENTAGE}%)`, 
-        amount: fareBreakdown.gstAmount 
+        label: `VAT (${VAT_PERCENTAGE}%)`, 
+        amount: fareBreakdown.vatAmount
       }
     ];
     
@@ -507,7 +516,9 @@ const ReviewBooking = () => {
             fareBreakdown: fareBreakdown,
             couponCode: couponDiscount ? couponCode : null,
             couponDiscount: couponDiscount ? couponDiscount.amount : 0,
-            roundRobinAllocation: data.roundRobinAllocation
+            roundRobinAllocation: data.roundRobinAllocation,
+            isWaitlist: Boolean(data.waitlistPosition),
+            waitlistPosition: data.waitlistPosition || null
           } 
         });
       } else {
@@ -574,34 +585,39 @@ const ReviewBooking = () => {
                         )}
                       </div>
                       
-                      <div className={styles.formGroup}>
-                        <label>Full Name*</label>
-                        <input 
-                          type="text" 
-                          value={traveler.name}
-                          onChange={(e) => updateTraveler(index, 'name', e.target.value)}
-                          className={`${styles.input} ${validationErrors.travelers[index]?.name ? styles.inputError : ''}`}
-                        />
-                        {validationErrors.travelers[index]?.name && (
-                          <span className={styles.errorMessage}>{validationErrors.travelers[index].name}</span>
-                        )}
-                      </div>
-                      
                       <div className={styles.formRow}>
                         <div className={styles.formGroup}>
-                          <label>Age*</label>
+                          <label>Full Name<span className={styles.requiredStar}>*</span></label>
+                          <input 
+                            type="text" 
+                            value={traveler.name}
+                            onChange={(e) => updateTraveler(index, 'name', e.target.value)}
+                            placeholder="As per official ID" 
+                            className={`${styles.input} ${validationErrors.travelers[index]?.name ? styles.inputError : ''}`}
+                          />
+                          {validationErrors.travelers[index]?.name && (
+                            <span className={styles.errorMessage}>{validationErrors.travelers[index].name}</span>
+                          )}
+                        </div>
+
+                        <div className={styles.formGroup}>
+                          <label>Age<span className={styles.requiredStar}>*</span></label>
                           <input 
                             type="number" 
                             value={traveler.age}
                             onChange={(e) => updateTraveler(index, 'age', e.target.value)}
+                            placeholder="Years" 
                             className={`${styles.input} ${validationErrors.travelers[index]?.age ? styles.inputError : ''}`}
                           />
                           {validationErrors.travelers[index]?.age && (
                             <span className={styles.errorMessage}>{validationErrors.travelers[index].age}</span>
                           )}
                         </div>
+                      </div>
+                      
+                      <div className={styles.formRow}>
                         <div className={styles.formGroup}>
-                          <label>Gender*</label>
+                          <label>Gender<span className={styles.requiredStar}>*</span></label>
                           <select 
                             value={traveler.gender}
                             onChange={(e) => updateTraveler(index, 'gender', e.target.value)}
@@ -612,9 +628,7 @@ const ReviewBooking = () => {
                             <option value="Other">Other</option>
                           </select>
                         </div>
-                      </div>
-                      
-                      <div className={styles.formRow}>
+                        
                         <div className={styles.formGroup}>
                           <label>Nationality</label>
                           <select 
@@ -622,23 +636,8 @@ const ReviewBooking = () => {
                             onChange={(e) => updateTraveler(index, 'nationality', e.target.value)}
                             className={styles.selectInput}
                           >
-                            <option value="Indian">Indian</option>
                             <option value="Nepali">Nepali</option>
-                            <option value="Other">Other</option>
-                          </select>
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label>Berth Preference</label>
-                          <select 
-                            value={traveler.berthPreference}
-                            onChange={(e) => updateTraveler(index, 'berthPreference', e.target.value)}
-                            className={styles.selectInput}
-                          >
-                            <option value="No Preference">No Preference</option>
-                            <option value="Lower">Lower</option>
-                            <option value="Middle">Middle</option>
-                            <option value="Upper">Upper</option>
-                            <option value="Side">Side</option>
+                            <option value="Foreigner">Foreigner</option>
                           </select>
                         </div>
                       </div>
@@ -661,7 +660,7 @@ const ReviewBooking = () => {
             
             <div className={styles.cardContent}>
               <div className={styles.formGroup}>
-                <label>Mobile Number*</label>
+                <label>Mobile Number<span className={styles.requiredStar}>*</span></label>
                 <input 
                   type="tel" 
                   value={contact.mobile}
@@ -675,12 +674,12 @@ const ReviewBooking = () => {
               </div>
               
               <div className={styles.formGroup}>
-                <label>Email*</label>
+                <label>Email<span className={styles.requiredStar}>*</span></label>
                 <input 
                   type="email" 
                   value={contact.email}
                   onChange={(e) => handleContactChange('email', e.target.value)}
-                  placeholder="Your email address" 
+                  placeholder="Ticket will be sent to this email" 
                   className={`${styles.input} ${validationErrors.contact.email ? styles.inputError : ''}`}
                 />
                 {validationErrors.contact.email && (
@@ -889,7 +888,7 @@ const ReviewBooking = () => {
 
           <motion.div className={styles.card}>
             <div className={styles.cardHeader}>
-              <FaRupeeSign className={styles.cardIcon} />
+              <FaMoneyBillWave className={styles.cardIcon} />
               <h3 className={styles.cardTitle}>Fare Breakdown</h3>
             </div>
             
@@ -910,8 +909,8 @@ const ReviewBooking = () => {
               </div>
               
               <div className={styles.fareItem}>
-                <span>GST ({GST_PERCENTAGE}%)</span>
-                <span>{formatCurrency(fareBreakdown.gstAmount)}</span>
+                <span>VAT ({VAT_PERCENTAGE}%)</span>
+                <span>{formatCurrency(fareBreakdown.vatAmount)}</span>
               </div>
               
               {fareBreakdown.mealsPrice > 0 && (

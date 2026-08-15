@@ -36,28 +36,33 @@ const BookingCard = () => {
         const data = await response.json();
         
         if (data.success && data.data.length > 0) {
-          setTrainData(data.data);
+          // Filter out expired trains — non-recurring trains whose departure date is in the past
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const activeSchedules = data.data.filter(schedule => {
+            if (schedule.runDays === 'Everyday') return true; // recurring trains are always active
+            if (!schedule.departureDate) return true;
+            return new Date(schedule.departureDate) >= today;
+          });
+
+          setTrainData(activeSchedules);
           
-          const uniqueDepartureStations = [...new Set(data.data.map(schedule => schedule.departureStation))];
-          const uniqueArrivalStations = [...new Set(data.data.map(schedule => schedule.arrivalStation))];
+          const uniqueDepartureStations = [...new Set(activeSchedules.map(schedule => schedule.departureStation))];
+          const uniqueArrivalStations = [...new Set(activeSchedules.map(schedule => schedule.arrivalStation))];
           
           setDepartureStations(uniqueDepartureStations);
           setArrivalStations(uniqueArrivalStations);
 
-          const firstSchedule = data.data[0];
-          setFromStation(firstSchedule.departureStation);
-          setToStation(firstSchedule.arrivalStation);
-          
-          // Format the departure date - convert from YYYY-MM-DD format
-          if (firstSchedule.departureDate) {
-            // departureDate is now in YYYY-MM-DD format from train availability
-            setDepartureDate(firstSchedule.departureDate);
-          } else {
-            // Set tomorrow as default if no date
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            setDepartureDate(tomorrow.toISOString().split('T')[0]);
+          if (uniqueDepartureStations.length > 0) {
+            setFromStation(uniqueDepartureStations[0]);
           }
+          if (uniqueArrivalStations.length > 0) {
+            setToStation(uniqueArrivalStations[0]);
+          }
+          
+          // Always default date to today
+          const todayStr = new Date().toISOString().split('T')[0];
+          setDepartureDate(todayStr);
         } else {
           // If no schedules found, set default date
           const tomorrow = new Date();

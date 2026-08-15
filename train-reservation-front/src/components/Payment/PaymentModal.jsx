@@ -190,7 +190,8 @@ const PaymentModal = () => {
         },
         body: JSON.stringify({
           transactionId: paymentResult.transactionId,
-          status: 'Confirmed',
+          // Payment completion must not assign a seat to a waitlisted booking.
+          status: bookingDetails.isWaitlist ? 'Waiting' : 'Confirmed',
           paymentStatus: 'completed'
         })
       });
@@ -209,7 +210,9 @@ const PaymentModal = () => {
               pnr: bookingDetails.pnr,
               selectedTrain: bookingDetails.selectedTrain,
               selectedFare: bookingDetails.selectedFare,
-              travelers: bookingDetails.travelers
+              travelers: bookingDetails.travelers,
+              isWaitlist: bookingDetails.isWaitlist,
+              waitlistPosition: bookingDetails.waitlistPosition
             },
             replace: true 
           });

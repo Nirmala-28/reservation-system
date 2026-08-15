@@ -205,7 +205,8 @@ const TicketConfirmation = () => {
     qrCode,
     contactInfo,
     travelDate,
-    roundRobinData
+    roundRobinData,
+    waitlistPosition
   } = ticketData;
 
   // Use train data from state if available, fallback to backend data
@@ -234,14 +235,16 @@ const TicketConfirmation = () => {
         >
           <FaCheckCircle className={styles.successIcon} />
         </motion.div>
-        <h1 className={styles.successTitle}>Booking Confirmed!</h1>
+        <h1 className={styles.successTitle}>{status === 'Waiting' ? 'Added to Waitlist!' : 'Booking Confirmed!'}</h1>
         <motion.p 
           className={styles.successSubtitle}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          Your tickets have been successfully booked. 
+          {status === 'Waiting'
+            ? `Your waitlist position is ${waitlistPosition || location.state?.waitlistPosition || 'pending'}. We will confirm your ticket when a seat becomes available.`
+            : 'Your tickets have been successfully booked.'}
         </motion.p>
         {ticketData.transactionId && (
           <motion.div 

@@ -81,6 +81,13 @@ class SegmentTree {
     const maxOccupancy = this.queryRange(0, 0, this.size - 1, startStopIdx, endStopIdx - 1);
     return maxOccupancy === 0;
   }
+
+  // A fare class has many seats. A segment can accept a booking when its peak
+  // occupancy plus the requested passengers stays within that class capacity.
+  isSegmentAvailable(startStopIdx, endStopIdx, capacity, quantity = 1) {
+    const maxOccupancy = this.queryRange(0, 0, this.size - 1, startStopIdx, endStopIdx - 1);
+    return maxOccupancy + quantity <= capacity;
+  }
 }
 
 module.exports = SegmentTree;

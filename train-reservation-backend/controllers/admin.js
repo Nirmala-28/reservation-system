@@ -112,14 +112,13 @@ exports.createTrainAvailability = async (req, res) => {
     
     // Initialize Round Robin scheduling
     availability.initializeScheduleSlots();
-    const allocationResult = availability.allocateSlotRoundRobin();
     
     await availability.save();
     
     res.status(201).json({
       success: true,
       data: availability,
-      allocationResult: allocationResult,
+      allocationResult: null,
       message: 'Train schedule created successfully with Round Robin algorithm optimization'
     });
   } catch (error) {
@@ -154,13 +153,12 @@ exports.updateTrainAvailability = async (req, res) => {
     // Reapply Round Robin algorithm if time quantum changed
     if (req.body.timeQuantum) {
       availability.initializeScheduleSlots();
-      const allocationResult = availability.allocateSlotRoundRobin();
       await availability.save();
       
       return res.status(200).json({
         success: true,
         data: availability,
-        allocationResult: allocationResult,
+        allocationResult: null,
         message: 'Schedule updated and Round Robin algorithm reapplied'
       });
     }
