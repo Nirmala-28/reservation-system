@@ -163,14 +163,18 @@ const BookingHistory = () => {
         arrivalStation: 'N/A'
       };
     }
-    
+
+    // Use trainAvailability for schedule-specific info (stations, times)
+    // Use train for basic train info (number, name)
+    const availability = booking.trainAvailability || {};
+
     return {
       trainNumber: booking.train.trainNumber || 'N/A',
       trainName: booking.train.trainName || 'Unknown Train',
-      departureTime: booking.train.departureTime || 'N/A',
-      arrivalTime: booking.train.arrivalTime || 'N/A',
-      departureStation: booking.train.departureStation || 'N/A',
-      arrivalStation: booking.train.arrivalStation || 'N/A'
+      departureTime: availability.departureTime || 'N/A',
+      arrivalTime: availability.arrivalTime || 'N/A',
+      departureStation: availability.departureStation || 'N/A',
+      arrivalStation: availability.arrivalStation || 'N/A'
     };
   };
 
