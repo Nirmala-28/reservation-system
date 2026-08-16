@@ -27,12 +27,24 @@ const AlgorithmVisualizers = () => {
   
   // Segment Tree State
   const [segments, setSegments] = useState(4);
-  const [bookings, setBookings] = useState([
+  const [segmentBookings, setSegmentBookings] = useState([
     { start: 1, end: 3 }
   ]);
   const [query, setQuery] = useState({ start: 0, end: 1 });
-  const [newBooking, setNewBooking] = useState({ start: 0, end: 1 });
+  const [newSegmentBooking, setNewSegmentBooking] = useState({ start: 0, end: 1 });
   const [availabilityResult, setAvailabilityResult] = useState(null);
+
+  // Round Robin State
+  const [timeQuantum, setTimeQuantum] = useState(30);
+  const [bookingQueue, setBookingQueue] = useState([
+    { id: 'BK001', processingTime: 45, status: 'waiting' },
+    { id: 'BK002', processingTime: 25, status: 'waiting' },
+    { id: 'BK003', processingTime: 60, status: 'waiting' }
+  ]);
+  const [newRoundRobinBooking, setNewRoundRobinBooking] = useState({ id: '', processingTime: 30 });
+  const [currentSlot, setCurrentSlot] = useState(0);
+  const [processedBookings, setProcessedBookings] = useState([]);
+  const [roundRobinResult, setRoundRobinResult] = useState(null);
 
   // Dijkstra Handlers
   const addEdge = () => {
@@ -85,10 +97,10 @@ const AlgorithmVisualizers = () => {
   };
 
   // Segment Tree Handlers
-  const addBooking = () => {
-    setBookings([...bookings, { 
-      start: parseInt(newBooking.start), 
-      end: parseInt(newBooking.end) 
+  const addSegmentBooking = () => {
+    setSegmentBookings([...segmentBookings, { 
+      start: parseInt(newSegmentBooking.start), 
+      end: parseInt(newSegmentBooking.end) 
     }]);
   };
 
@@ -96,13 +108,79 @@ const AlgorithmVisualizers = () => {
     try {
       const response = await axios.post('http://localhost:5000/api/algorithm/segment-tree/query', {
         segments,
-        bookings,
+        bookings: segmentBookings,
         query
       });
       setAvailabilityResult(response.data.isAvailable);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // Round Robin Handlers
+  const addRoundRobinBooking = () => {
+    if (newRoundRobinBooking.id && newRoundRobinBooking.processingTime) {
+      setBookingQueue([...bookingQueue, {
+        id: newRoundRobinBooking.id,
+        processingTime: parseInt(newRoundRobinBooking.processingTime),
+        status: 'waiting'
+      }]);
+      setNewRoundRobinBooking({ id: '', processingTime: 30 });
+    }
+  };
+
+  const resetRoundRobin = () => {
+    setBookingQueue([
+      { id: 'BK001', processingTime: 45, status: 'waiting' },
+      { id: 'BK002', processingTime: 25, status: 'waiting' },
+      { id: 'BK003', processingTime: 60, status: 'waiting' }
+    ]);
+    setProcessedBookings([]);
+    setCurrentSlot(0);
+    setRoundRobinResult(null);
+  };
+
+  const simulateRoundRobin = () => {
+    const queue = [...bookingQueue];
+    const processed = [];
+    let currentTime = 0;
+    let slotIndex = 0;
+    
+    while (queue.length > 0) {
+      const currentBooking = queue[slotIndex];
+      if (currentBooking.status === 'completed') {
+        queue.splice(slotIndex, 1);
+        slotIndex = slotIndex % queue.length;
+        continue;
+      }
+      
+      const executionTime = Math.min(timeQuantum, currentBooking.processingTime);
+      currentBooking.processingTime -= executionTime;
+      currentTime += executionTime;
+      
+      if (currentBooking.processingTime <= 0) {
+        currentBooking.status = 'completed';
+        processed.push({
+          id: currentBooking.id,
+          totalTime: currentTime,
+          timeSlots: Math.ceil(currentTime / timeQuantum)
+        });
+      } else {
+        currentBooking.status = 'processing';
+      }
+      
+      slotIndex = (slotIndex + 1) % queue.length;
+      if (queue.length === 0) break;
+    }
+    
+    setProcessedBookings(processed);
+    setBookingQueue(queue);
+    setCurrentSlot(slotIndex);
+    setRoundRobinResult({
+      totalProcessed: processed.length,
+      totalExecutionTime: currentTime,
+      averageTimePerBooking: processed.length > 0 ? currentTime / processed.length : 0
+    });
   };
 
   return (
@@ -130,6 +208,12 @@ const AlgorithmVisualizers = () => {
           onClick={() => setActiveTab('segtree')}
         >
           🌲 Segment Tree Seat Allocator
+        </button>
+        <button 
+          className={`${styles.tabBtn} ${activeTab === 'roundrobin' ? styles.activeTab : ''}`}
+          onClick={() => setActiveTab('roundrobin')}
+        >
+          ⚙️ Round Robin Scheduling
         </button>
       </div>
 
@@ -289,21 +373,21 @@ const AlgorithmVisualizers = () => {
                   <label>Start Segment Index: </label>
                   <input 
                     type="number" 
-                    value={newBooking.start} 
-                    onChange={e => setNewBooking({...newBooking, start: e.target.value})} 
+                    value={newSegmentBooking.start} 
+                    onChange={e => setNewSegmentBooking({...newSegmentBooking, start: e.target.value})} 
                   />
                   <label>End Segment Index: </label>
                   <input 
                     type="number" 
-                    value={newBooking.end} 
-                    onChange={e => setNewBooking({...newBooking, end: e.target.value})} 
+                    value={newSegmentBooking.end} 
+                    onChange={e => setNewSegmentBooking({...newSegmentBooking, end: e.target.value})} 
                   />
-                  <button onClick={addBooking} className={styles.actionBtn}>Book Range</button>
+                  <button onClick={addSegmentBooking} className={styles.actionBtn}>Book Range</button>
                 </div>
 
                 <h4 style={{ marginTop: '1.5rem' }}>Active Range Bookings</h4>
                 <div className={styles.edgesList}>
-                  {bookings.map((booking, idx) => (
+                  {segmentBookings.map((booking, idx) => (
                     <div key={idx} className={styles.edgeItem}>
                       Stop {booking.start} ➔ Stop {booking.end}
                     </div>
@@ -336,6 +420,91 @@ const AlgorithmVisualizers = () => {
                     ) : (
                       <p className={styles.errorText}>❌ Seat is ALREADY BOOKED/OCCUPIED in this stops range.</p>
                     )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ROUND ROBIN VISUALIZER */}
+        {activeTab === 'roundrobin' && (
+          <div className={styles.visualizerBlock}>
+            <h3>Round Robin CPU Scheduling Algorithm</h3>
+            <p className={styles.desc}>
+              Fair CPU scheduling algorithm that allocates a fixed time quantum to each booking request in circular order. Prevents starvation and ensures fair processing during high concurrency periods.
+            </p>
+
+            <div className={styles.grid}>
+              <div className={styles.card}>
+                <h4>Add Booking Request</h4>
+                <div className={styles.formRow}>
+                  <input 
+                    type="text" 
+                    placeholder="Booking ID (e.g. BK004)" 
+                    value={newRoundRobinBooking.id} 
+                    onChange={e => setNewRoundRobinBooking({...newRoundRobinBooking, id: e.target.value})}
+                  />
+                  <input 
+                    type="number" 
+                    placeholder="Processing Time (ms)" 
+                    value={newRoundRobinBooking.processingTime} 
+                    onChange={e => setNewRoundRobinBooking({...newRoundRobinBooking, processingTime: e.target.value})}
+                  />
+                  <button onClick={addRoundRobinBooking} className={styles.actionBtn}>Add to Queue</button>
+                </div>
+
+                <div className={styles.formRow} style={{ marginTop: '1rem' }}>
+                  <label>Time Quantum: </label>
+                  <input 
+                    type="number" 
+                    value={timeQuantum} 
+                    onChange={e => setTimeQuantum(parseInt(e.target.value))}
+                    min="10"
+                    max="100"
+                  />
+                  <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>ms per time slice</span>
+                </div>
+
+                <div className={styles.promotionBox}>
+                  <button onClick={simulateRoundRobin} className={styles.promoteBtn}>
+                    ⚡ Run Round Robin Scheduler
+                  </button>
+                  <button onClick={resetRoundRobin} className={styles.actionBtn} style={{ marginTop: '0.5rem' }}>
+                    🔄 Reset Queue
+                  </button>
+                </div>
+              </div>
+
+              <div className={styles.card}>
+                <h4>Booking Queue Status</h4>
+                <div className={styles.pqList}>
+                  {bookingQueue.length === 0 ? (
+                    <p className={styles.emptyText}>Queue is currently empty.</p>
+                  ) : (
+                    bookingQueue.map((booking, idx) => (
+                      <div key={booking.id} className={styles.pqItem}>
+                        <span className={styles.indexBadge}>Position {idx + 1}</span>
+                        <span className={styles.passengerName}>{booking.id}</span>
+                        <span className={styles.priorityBadge}>
+                          {booking.status === 'completed' ? '✅ Done' : 
+                           booking.status === 'processing' ? '⏳ Processing' : 
+                           '⏸️ Waiting'} ({booking.processingTime}ms)
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {roundRobinResult && (
+                  <div className={styles.resultBox} style={{ marginTop: '1rem' }}>
+                    <p className={styles.successText}>
+                      🎯 Processed {roundRobinResult.totalProcessed} bookings
+                    </p>
+                    <p className={styles.pathSummary}>
+                      Total Execution Time: <strong>{roundRobinResult.totalExecutionTime}ms</strong> | 
+                      Average: <strong>{roundRobinResult.averageTimePerBooking.toFixed(1)}ms</strong> per booking
+                    </p>
                   </div>
                 )}
               </div>

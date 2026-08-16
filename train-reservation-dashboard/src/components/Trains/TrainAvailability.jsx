@@ -226,7 +226,11 @@ const TrainAvailability = () => {
                       <div className={styles.schedule}>
                         <div>{availability.departureDate} {availability.departureTime}</div>
                         <div className={styles.duration}>⏱️ {availability.duration}</div>
-                        <div className={styles.runDays}>📅 {availability.runDays}</div>
+                        <div className={styles.runDays}>
+                          📅 {availability.runDays === 'Everyday' && availability.departureDate && availability.arrivalDate
+                            ? `Specific: ${new Date(availability.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                            : availability.runDays}
+                        </div>
                       </div>
                     </div>
                   </td>

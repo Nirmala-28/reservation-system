@@ -523,12 +523,27 @@ name="runDays"
 value={schedule.runDays}
 onChange={handleChange}
 required
+style={{
+  backgroundColor: schedule.runDays === 'Everyday' && schedule.departureDate && schedule.arrivalDate
+    ? '#fef3c7'
+    : undefined
+}}
 >
-<option value="Everyday">Everyday</option>
-<option value="Weekdays">Weekdays</option>
-<option value="Weekends">Weekends</option>
-<option value="Specific Days">Specific Days</option>
+<option value="Everyday">Everyday (Daily Service)</option>
+<option value="Weekdays">Weekdays (Mon-Fri)</option>
+<option value="Weekends">Weekends (Sat-Sun)</option>
+<option value="Specific Days">Specific Days (One-time/Special)</option>
 </select>
+{schedule.runDays === 'Everyday' && schedule.departureDate && schedule.arrivalDate && (
+  <small className={styles.helpText} style={{ color: '#d97706', fontWeight: '500' }}>
+    ⚠️ Warning: You have specific dates set but "Everyday" is selected. Consider changing to "Specific Days" for clarity.
+  </small>
+)}
+{schedule.runDays === 'Specific Days' && (!schedule.departureDate || !schedule.arrivalDate) && (
+  <small className={styles.helpText} style={{ color: '#d97706', fontWeight: '500' }}>
+    ⚠️ Warning: "Specific Days" selected but no departure/arrival dates set.
+  </small>
+)}
 </div>
 </div>
 </div>

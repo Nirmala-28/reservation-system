@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import { CURRENCY_CONFIG, formatCurrency, parseCurrency, calculateTax } from "../../config/currency";
 import { 
   FaUser, FaPhone, FaUtensils, FaTrain, FaMoneyBillWave, 
   FaEdit, FaCheck, FaChevronDown, FaChevronUp, 
@@ -16,7 +17,6 @@ import { useAuth } from "../../context/AuthContext";
 // Constants for fare calculation
 const RESERVATION_CHARGES = 40;
 const SUPERFAST_CHARGES = 75;
-const VAT_PERCENTAGE = 13;
 
 const ReviewBooking = () => {
   const { user } = useAuth();
@@ -61,10 +61,10 @@ const ReviewBooking = () => {
   }, []);
 
   const parsePrice = (priceString) => {
-    if (typeof priceString === 'number') return priceString;
-    return parseFloat(priceString.toString().replace(/[Rs.,\s]/g, '')) || 0;
+    return parseCurrency(priceString);
   };
 
+  // Local formatCurrency for fallback (should use centralized config)
   const formatCurrency = (amount) => {
     const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
     return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -379,7 +379,7 @@ const ReviewBooking = () => {
     const baseFare = basePrice * travelers.length;
     const reservationCharges = RESERVATION_CHARGES * travelers.length;
     const superfastCharges = SUPERFAST_CHARGES * travelers.length;
-    const vatAmount = ((baseFare + reservationCharges + superfastCharges) * VAT_PERCENTAGE / 100).toFixed(2);
+    const vatAmount = calculateTax(baseFare + reservationCharges + superfastCharges).toFixed(2);
     const mealsPrice = calculateTotalMealsPrice();
     
     let subtotal = baseFare + reservationCharges + superfastCharges + parseFloat(vatAmount) + mealsPrice;
@@ -434,7 +434,7 @@ const ReviewBooking = () => {
         amount: fareBreakdown.superfastCharges.toFixed(2) 
       },
       { 
-        label: `VAT (${VAT_PERCENTAGE}%)`, 
+        label: `${CURRENCY_CONFIG.taxName} (${CURRENCY_CONFIG.taxRate}%)`, 
         amount: fareBreakdown.vatAmount
       }
     ];

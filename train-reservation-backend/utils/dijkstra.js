@@ -1,5 +1,20 @@
 // utils/dijkstra.js
-
+/**
+ * Dijkstra's Algorithm Implementation for Route Optimization
+ * 
+ * Time Complexity: O(E + V log V) using standard implementation
+ * - E: Number of edges (train routes)
+ * - V: Number of vertices (stations)
+ * - Log V factor comes from priority queue operations
+ * 
+ * Space Complexity: O(V + E) for storing the graph and distance tables
+ * - O(V) for distance and backtrace arrays
+ * - O(E) for adjacency list representation
+ * 
+ * This implementation finds the shortest path in a weighted directed graph,
+ * perfect for multi-hop train route optimization when direct connections
+ * are not available between stations.
+ */
 class DijkstraSolver {
   constructor() {
     this.adjacencyList = {};

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import { CURRENCY_CONFIG, formatCurrency, parseCurrency } from "../../config/currency";
 import { 
-  FaRupeeSign, FaTrain, FaUser, FaTag, FaCreditCard, 
+  FaTrain, FaUser, FaTag, FaCreditCard, 
   FaWallet, FaCheck, FaShieldAlt, FaClock,
   FaArrowLeft, FaSpinner, FaPaypal
 } from "react-icons/fa";
@@ -59,11 +60,10 @@ const PaymentModal = () => {
 
   // Utility function to parse price from various formats
   const parsePrice = (priceString) => {
-    if (typeof priceString === 'number') return priceString;
-    return parseFloat(priceString.toString().replace(/[Rs.,\s]/g, '')) || 0;
+    return parseCurrency(priceString);
   };
 
-  // Utility function to format currency
+  // Local formatCurrency for fallback (should use centralized config)
   const formatCurrency = (amount) => {
     const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
     return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -417,8 +417,8 @@ const PaymentModal = () => {
                   </div>
                   
                   <div className={styles.fareRow}>
-                    <span>GST (5%)</span>
-                    <span>{formatCurrency(bookingDetails.fareBreakdown.gstAmount)}</span>
+                    <span>{CURRENCY_CONFIG.taxName} ({CURRENCY_CONFIG.taxRate}%)</span>
+                    <span>{formatCurrency(bookingDetails.fareBreakdown.vatAmount || bookingDetails.fareBreakdown.gstAmount)}</span>
                   </div>
                   
                   {bookingDetails.fareBreakdown.mealsPrice > 0 && (

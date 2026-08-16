@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
+import { CURRENCY_CONFIG, formatCurrency } from "../../config/currency";
 import { 
   FaCheckCircle, FaPrint, FaFileDownload, FaTrain, 
-  FaUser, FaRupeeSign, FaQrcode, FaSpinner, 
+  FaUser, FaQrcode, FaSpinner, 
   FaExclamationTriangle, FaArrowLeft, FaClock,
   FaCalendarAlt, FaRoute
 } from "react-icons/fa";
@@ -17,12 +18,6 @@ const TicketConfirmation = () => {
   const [error, setError] = useState(null);
   const [ticketData, setTicketData] = useState(null);
   const containerRef = useRef(null);
-
-  // Utility function to format currency
-  const formatCurrency = (amount) => {
-    const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-    return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -421,8 +416,8 @@ const TicketConfirmation = () => {
                       <span>{formatCurrency(fareBreakdown.superfastCharges)}</span>
                     </div>
                     <div className={styles.fareRow}>
-                      <span>GST (5%)</span>
-                      <span>{formatCurrency(fareBreakdown.gstAmount)}</span>
+                      <span>{CURRENCY_CONFIG.taxName} ({CURRENCY_CONFIG.taxRate}%)</span>
+                      <span>{formatCurrency(fareBreakdown.vatAmount || fareBreakdown.gstAmount)}</span>
                     </div>
                     {fareBreakdown.mealsPrice > 0 && (
                       <div className={styles.fareRow}>
@@ -482,6 +477,7 @@ const TicketConfirmation = () => {
                 </div>
               )}
               <p>Scan to view ticket on any device</p>
+              <p className={styles.scanHint}>Works with any QR scanner app</p>
             </motion.div>
           </motion.div>
         </div>

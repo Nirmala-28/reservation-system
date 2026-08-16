@@ -370,7 +370,9 @@ exports.getBookings = async (req, res) => {
     const bookings = await Booking.find()
       .populate('user', 'name email phone')
       .populate('train', 'trainNumber trainName')
-      .populate('meals.meal');
+      .populate('trainAvailability', 'trainNumber trainName runDays algorithmType')
+      .populate('meals.meal')
+      .sort({ createdAt: -1 }); // Sort by creation date descending (newest first)
 
     res.status(200).json({
       success: true,

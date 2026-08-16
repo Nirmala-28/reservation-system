@@ -478,7 +478,14 @@ const TrainSearch = () => {
                     >
                       <div className={styles.time}>{train.departureTime}</div>
                       <div className={styles.station}>{train.departureStation}</div>
-                      <div className={styles.trainDate}>{train.departureDate ? new Date(train.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</div>
+                      <div className={styles.trainDate}>
+                        {train.departureDate ? new Date(train.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                        {train.runDays === 'Everyday' && !train.departureDate && (
+                          <span style={{ fontSize: '0.7rem', color: '#6b7280', marginLeft: '4px' }}>
+                            (Daily service)
+                          </span>
+                        )}
+                      </div>
                     </motion.div>
                     
                     <div className={styles.durationContainer}>
@@ -509,10 +516,25 @@ const TrainSearch = () => {
                       <motion.span 
                         className={styles.badge}
                         whileHover={{ scale: 1.05 }}
+                        style={{
+                          background: train.runDays === 'Everyday' && train.departureDate && train.arrivalDate 
+                            ? '#fef3c7' // Different color for specific-date trains marked as Everyday
+                            : undefined,
+                          color: train.runDays === 'Everyday' && train.departureDate && train.arrivalDate
+                            ? '#d97706'
+                            : undefined
+                        }}
                       >
-                        {train.runDays}
+                        {train.runDays === 'Everyday' && train.departureDate && train.arrivalDate
+                          ? `Specific Date (${new Date(train.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
+                          : train.runDays}
                       </motion.span>
                     </p>
+                    {train.runDays === 'Everyday' && train.departureDate && train.arrivalDate && (
+                      <p className={styles.processingInfo} style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                        <strong>Note:</strong> This train runs only on specific dates
+                      </p>
+                    )}
                     {train.timeQuantum && (
                       <p className={styles.processingInfo}>
                         <strong>Processing Time:</strong> {train.timeQuantum} minutes

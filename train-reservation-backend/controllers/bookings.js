@@ -6,9 +6,11 @@ const Meal = require('../models/Meal');
 const Coupon = require('../models/Coupon');
 const generatePNR = require('../utils/generatePNR');
 const generateQRCode = require('../utils/generateQRCode');
+const sendEmail = require('../utils/sendEmail');
 const SegmentTree = require('../utils/segmentTree');
 const PriorityQueue = require('../utils/priorityQueue');
 const { dateRange, getOrCreateInventory, reserveSeats, releaseSeats } = require('../utils/travelInventory');
+const { trainAvailabilityCache } = require('../utils/cache');
 
 // @desc    Create booking
 // @route   POST /api/bookings
@@ -76,7 +78,10 @@ exports.createBooking = async (req, res) => {
     // the Segment Tree verifies the requested segment is free before
     // allowing the booking to proceed. This enables the SAME physical
     // seat to be reused by two passengers on non-overlapping sub-routes.
+    // Time Complexity: O(log N) per query/update with lazy propagation
+    // Space Complexity: O(4N) where N is number of segments
     // -----------------------------------------------------------------
+    const segmentTreeStartTime = Date.now();
     let segStartIdx = 0;
     let segEndIdx = 1;
     let assignedSeats = [];
@@ -136,18 +141,25 @@ exports.createBooking = async (req, res) => {
         .map(index => `${classInfo}-${index + 1}`);
 
       if (!segFree) {
+        const segmentTreeExecutionTime = Date.now() - segmentTreeStartTime;
         segmentTreeResult = `CONFLICT — segment [${segStartIdx}, ${segEndIdx}] is occupied`;
-        console.log(`[Segment Tree] ${segmentTreeResult}`);
+        console.log(`[Segment Tree] ${segmentTreeResult} (Execution: ${segmentTreeExecutionTime}ms)`);
         return res.status(400).json({
           success: false,
           message: `No seat available for your route segment (${trainAvailability.departureStation} → ${trainAvailability.arrivalStation}). Another passenger is occupying this seat on your travel segment.`,
           algorithm: 'SegmentTree',
-          segmentCheck: segmentTreeResult
+          segmentCheck: segmentTreeResult,
+          performanceMetrics: {
+            executionTime: `${segmentTreeExecutionTime}ms`,
+            segmentsChecked: stops.length - 1,
+            seatsAnalyzed: classCapacity
+          }
         });
       }
 
+      const segmentTreeExecutionTime = Date.now() - segmentTreeStartTime;
       segmentTreeResult = `OK — segment [${segStartIdx}, ${segEndIdx}] is free`;
-      console.log(`[Segment Tree] ${segmentTreeResult}`);
+      console.log(`[Segment Tree] ${segmentTreeResult} (Execution: ${segmentTreeExecutionTime}ms)`);
     }
 
     // -----------------------------------------------------------------
@@ -158,7 +170,7 @@ exports.createBooking = async (req, res) => {
     const isSenior = passengers.some(p => parseInt(p.age) >= 60);
     const priorityScore = isSenior ? 3 : 1;
 
-    // Calculate base fare — strip all non-numeric chars (₹, Rs, commas, spaces) except decimal
+    // Calculate base fare — strip all non-numeric chars (Rs, commas, spaces) except decimal
     const baseFare = parseFloat(String(selectedClass.price).replace(/[^0-9.]/g, '')) * passengers.length;
 
     // Calculate meal prices
@@ -178,10 +190,10 @@ exports.createBooking = async (req, res) => {
       }
     }
 
-    // Calculate charges
+    // Calculate charges (Nepal specific)
     const reservationCharges = 40 * passengers.length;
     const superfastCharges = 75 * passengers.length;
-    const vatAmount = (baseFare + reservationCharges + superfastCharges) * 0.13;
+    const vatAmount = (baseFare + reservationCharges + superfastCharges) * 0.13; // 13% VAT for Nepal
 
     let subtotal = baseFare + reservationCharges + superfastCharges + vatAmount + mealTotal;
 
@@ -343,6 +355,9 @@ exports.createBooking = async (req, res) => {
     }
 
     // Apply Round Robin algorithm for booking queue
+    // Time Complexity: O(1) per request with circular queue
+    // Space Complexity: O(N) where N is queue length
+    const roundRobinStartTime = Date.now();
     const bookingData = {
       bookingId: booking._id.toString(),
       arrivalTime: new Date(),
@@ -357,6 +372,7 @@ exports.createBooking = async (req, res) => {
     const processedBookings = trainAvailability.processBookingsRoundRobin();
     trainAvailability.updateMetrics();
     await trainAvailability.save();
+    const roundRobinExecutionTime = Date.now() - roundRobinStartTime;
 
     // Generate QR code
     const qrData = {
@@ -376,6 +392,11 @@ exports.createBooking = async (req, res) => {
       result: allocationResult.success
         ? `Slot ${allocationResult.allocatedSlot?.slotId} allocated (quantum=${allocationResult.timeQuantum}min)`
         : 'No free slot available',
+      performanceMetrics: {
+        executionTime: `${roundRobinExecutionTime}ms`,
+        queueLength: trainAvailability.bookingQueue.length,
+        timeQuantum: allocationResult.timeQuantum
+      }
     });
 
     // Save the algorithm data directly to the booking document
@@ -383,17 +404,78 @@ exports.createBooking = async (req, res) => {
       queuePosition: trainAvailability.bookingQueue.length,
       allocationTime: allocationResult.allocatedSlot?.allocationTime || new Date(),
       waitTime: allocationResult.timeQuantum || 0,
-      timeSlotAllocated: allocationResult.allocatedSlot?.timeSlot || 'Standard'
+      timeSlotAllocated: allocationResult.allocatedSlot?.timeSlot || 'Standard',
+      executionTime: roundRobinExecutionTime
     };
 
     booking.status = 'Confirmed';
     await booking.save();
 
+    // Send confirmation email
+    try {
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 24px;">🚂 Train Reservation Confirmed</h1>
+            <p style="margin: 10px 0 0; opacity: 0.9;">PNR: ${pnr}</p>
+          </div>
+          
+          <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin-top: 20px;">
+            <h2 style="color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px;">Booking Details</h2>
+            
+            <div style="margin: 20px 0;">
+              <p><strong>Train:</strong> ${trainAvailability.trainNumber} - ${trainAvailability.trainName}</p>
+              <p><strong>Route:</strong> ${trainAvailability.departureStation} → ${trainAvailability.arrivalStation}</p>
+              <p><strong>Departure:</strong> ${trainAvailability.departureTime} on ${new Date(travelDate).toLocaleDateString()}</p>
+              <p><strong>Arrival:</strong> ${trainAvailability.arrivalTime} on ${new Date(trainAvailability.arrivalDate).toLocaleDateString()}</p>
+              <p><strong>Class:</strong> ${classInfo}</p>
+              <p><strong>Total Amount:</strong> Rs.${totalAmount.toFixed(2)}</p>
+            </div>
+            
+            <h3 style="color: #333; margin-top: 30px;">Passenger Details</h3>
+            ${passengers.map((p, i) => `
+              <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #667eea;">
+                <p><strong>Passenger ${i + 1}:</strong> ${p.name} (${p.age} years, ${p.gender})</p>
+                <p><strong>Seat:</strong> ${p.seat || 'To be assigned'}</p>
+              </div>
+            `).join('')}
+            
+            <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border-radius: 10px; text-align: center;">
+              <p style="margin: 0; color: #2e7d32; font-weight: bold;">✅ Your booking is confirmed!</p>
+              <p style="margin: 5px 0 0; color: #666;">Please arrive at the station 30 minutes before departure</p>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px; color: #666; font-size: 12px;">
+            <p>This is an automated email. Please do not reply.</p>
+            <p>© 2026 Nepal Train Reservation System</p>
+          </div>
+        </div>
+      `;
+
+      await sendEmail({
+        email: contactInfo.email,
+        subject: `Booking Confirmed - PNR: ${pnr}`,
+        message: emailHtml
+      });
+      
+      console.log('[Email] Confirmation email sent to:', contactInfo.email);
+    } catch (emailError) {
+      console.error('[Email] Failed to send confirmation email:', emailError);
+      // Don't fail the booking if email fails
+    }
+
+    // Invalidate related cache entries by clearing cache (simple approach)
+    // In production, you'd want more selective invalidation
+    console.log('[Cache] Clearing train availability cache after booking');
+    trainAvailabilityCache.clear();
+
     console.log('[Round Robin] Booking confirmed:', {
       bookingId: booking._id,
       pnr,
       totalAmount,
-      roundRobinResult: allocationResult
+      roundRobinResult: allocationResult,
+      executionTime: `${roundRobinExecutionTime}ms`
     });
 
     res.status(201).json({
@@ -404,17 +486,44 @@ exports.createBooking = async (req, res) => {
       qrCode,
       algorithms: {
         segmentTree: segmentTreeResult,
-        roundRobin: { ...allocationResult, processedBookings },
+        roundRobin: { 
+          ...allocationResult, 
+          processedBookings,
+          performanceMetrics: {
+            executionTime: `${roundRobinExecutionTime}ms`,
+            queueLength: trainAvailability.bookingQueue.length
+          }
+        },
       },
       message: 'Booking confirmed — verified by Segment Tree + allocated via Round Robin'
     });
 
   } catch (error) {
     console.error('Booking creation error:', error);
-    res.status(400).json({
+    
+    // Provide algorithm-specific error context
+    let errorContext = {
       success: false,
-      message: error.message
-    });
+      message: error.message,
+      timestamp: new Date().toISOString()
+    };
+
+    // Add algorithm-specific context if available
+    if (error.message.includes('segment') || error.message.includes('Segment')) {
+      errorContext.algorithm = 'SegmentTree';
+      errorContext.errorType = 'SEAT_ALLOCATION_CONFLICT';
+      errorContext.suggestion = 'Try a different travel class or adjust your travel dates';
+    } else if (error.message.includes('queue') || error.message.includes('Round Robin')) {
+      errorContext.algorithm = 'RoundRobin';
+      errorContext.errorType = 'SCHEDULING_ERROR';
+      errorContext.suggestion = 'System is experiencing high load, please try again';
+    } else if (error.message.includes('priority') || error.message.includes('waitlist')) {
+      errorContext.algorithm = 'PriorityQueue';
+      errorContext.errorType = 'WAITLIST_ERROR';
+      errorContext.suggestion = 'Waitlist capacity may be full, contact support';
+    }
+
+    res.status(400).json(errorContext);
   }
 };
 
@@ -427,7 +536,7 @@ exports.getMyBookings = async (req, res) => {
       .populate('train')
       .populate('trainAvailability')
       .populate('meals.meal')
-      .sort('-createdAt');
+      .sort({ createdAt: -1 }); // Use Mongoose sort syntax for consistency
 
     res.status(200).json({
       success: true,
@@ -536,7 +645,10 @@ exports.cancelBooking = async (req, res) => {
     // for the same train schedule + class. Load them into a Max-Heap
     // Priority Queue ordered by priorityScore (desc) then bookingDate
     // (FIFO). Promote the top passenger automatically to 'Confirmed'.
+    // Time Complexity: O(log N) for enqueue/dequeue operations
+    // Space Complexity: O(N) where N is number of waiting passengers
     // -----------------------------------------------------------------
+    const priorityQueueStartTime = Date.now();
     const cancelledTravelDate = dateRange(booking.travelDate);
     const waitlistedBookings = releasedConfirmedSeat
       ? await Booking.find({
@@ -575,6 +687,7 @@ exports.cancelBooking = async (req, res) => {
       const promotedReservation = promotedBooking && promotedClass
         ? await reserveSeats(availabilityToUpdate, promotedClass, promotedBooking.travelDate, promotedBooking.passengers.length)
         : null;
+      const priorityQueueExecutionTime = Date.now() - priorityQueueStartTime;
 
       if (promotedBooking && promotedReservation) {
         promotedBooking.status = 'Confirmed';
@@ -584,11 +697,16 @@ exports.cancelBooking = async (req, res) => {
           algorithm: 'PriorityQueue',
           action: 'promoted',
           result: `Promoted from Waiting → Confirmed. Priority score: ${promotedBooking.priorityScore}. Queue had ${waitlistedBookings.length} passengers.`,
+          performanceMetrics: {
+            executionTime: `${priorityQueueExecutionTime}ms`,
+            heapSize: waitlistedBookings.length,
+            priorityScore: promotedBooking.priorityScore
+          }
         });
         await promotedBooking.save();
 
         priorityQueueResult = `Promoted booking ${topBookingId} (priorityScore=${promotedBooking.priorityScore}, PNR=${promotedBooking.pnr}) from Waiting → Confirmed`;
-        console.log(`[Priority Queue] ${priorityQueueResult}`);
+        console.log(`[Priority Queue] ${priorityQueueResult} (Execution: ${priorityQueueExecutionTime}ms)`);
       }
     }
 
@@ -598,8 +716,17 @@ exports.cancelBooking = async (req, res) => {
       algorithm: 'PriorityQueue',
       action: 'waitlist_check',
       result: priorityQueueResult,
+      performanceMetrics: {
+        executionTime: releasedConfirmedSeat && waitlistedBookings.length > 0 ? `${priorityQueueExecutionTime}ms` : 'N/A',
+        waitlistSize: waitlistedBookings.length,
+        promotionOccurred: promotedBooking !== null
+      }
     });
     await booking.save();
+
+    // Invalidate cache after cancellation to ensure fresh availability data
+    console.log('[Cache] Clearing train availability cache after cancellation');
+    trainAvailabilityCache.clear();
 
     res.status(200).json({
       success: true,
@@ -614,6 +741,10 @@ exports.cancelBooking = async (req, res) => {
             priorityScore: promotedBooking.priorityScore,
           } : null,
           waitlistSize: waitlistedBookings.length,
+          performanceMetrics: {
+            executionTime: releasedConfirmedSeat && waitlistedBookings.length > 0 ? `${priorityQueueExecutionTime}ms` : 'N/A',
+            heapOperations: waitlistedBookings.length > 0 ? waitlistedBookings.length * 2 : 0 // enqueue + dequeue
+          }
         }
       },
       message2: promotedBooking
@@ -622,10 +753,27 @@ exports.cancelBooking = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(400).json({
+    console.error('Booking cancellation error:', error);
+    
+    // Provide algorithm-specific error context
+    let errorContext = {
       success: false,
-      message: error.message
-    });
+      message: error.message,
+      timestamp: new Date().toISOString()
+    };
+
+    // Add algorithm-specific context if available
+    if (error.message.includes('priority') || error.message.includes('waitlist') || error.message.includes('PriorityQueue')) {
+      errorContext.algorithm = 'PriorityQueue';
+      errorContext.errorType = 'WAITLIST_PROMOTION_ERROR';
+      errorContext.suggestion = 'Automatic waitlist promotion failed, contact support';
+    } else if (error.message.includes('seat') || error.message.includes('inventory')) {
+      errorContext.algorithm = 'SegmentTree';
+      errorContext.errorType = 'SEAT_RELEASE_ERROR';
+      errorContext.suggestion = 'Seat release failed, contact support';
+    }
+
+    res.status(400).json(errorContext);
   }
 };
 

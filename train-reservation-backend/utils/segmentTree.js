@@ -1,5 +1,18 @@
 // utils/segmentTree.js
-
+/**
+ * Segment Tree Implementation for Smart Seat Allocation
+ * 
+ * Time Complexity:
+ * - Construction: O(N) where N is the number of segments
+ * - Range Update: O(log N) with lazy propagation
+ * - Range Query: O(log N) with lazy propagation
+ * 
+ * Space Complexity: O(4N) for the tree array + O(4N) for lazy propagation array
+ * 
+ * This implementation uses lazy propagation to efficiently handle range updates
+ * and queries, making it suitable for dynamic seat allocation scenarios where
+ * bookings are frequently added and removed.
+ */
 class SegmentTree {
   // size represents the number of sub-segments (stops - 1)
   constructor(size) {

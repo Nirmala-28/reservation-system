@@ -1,5 +1,20 @@
 // utils/priorityQueue.js
-
+/**
+ * Max-Heap Priority Queue Implementation for Waitlist Management
+ * 
+ * Time Complexity:
+ * - Enqueue (insert): O(log N) due to heapify-up operation
+ * - Dequeue (extract max): O(log N) due to heapify-down operation
+ * - Peek (get max): O(1) - direct access to root element
+ * - Size check: O(1)
+ * 
+ * Space Complexity: O(N) where N is the number of elements in the heap
+ * 
+ * This implementation uses a binary max-heap structure with custom comparison:
+ * - Higher priority values are served first
+ * - FIFO tie-breaking using timestamps when priorities are equal
+ * - Suitable for fair waitlist management with priority considerations
+ */
 class PriorityQueue {
   constructor() {
     this.heap = [];

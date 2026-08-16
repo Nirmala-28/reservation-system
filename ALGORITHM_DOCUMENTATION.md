@@ -1,4 +1,3 @@
-
 # 🧠 Final Year Project: Algorithm Integration Documentation
 
 This document serves as the official guide for the **four computer science algorithms** implemented in the Train Reservation System. It is designed to answer any questions from supervisors regarding the necessity, implementation, and performance of the algorithms used in this project.

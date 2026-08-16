@@ -221,7 +221,10 @@ const ScheduleList = () => {
                       <strong className={styles.trainNumber}>{schedule.trainNumber}</strong>
                       <div className={styles.trainName}>{schedule.trainName}</div>
                       <div className={styles.rating}>
-                        ⭐ {schedule.rating || 0} | 📅 {schedule.runDays}
+                        ⭐ {schedule.rating || 0} | 📅 
+                        {schedule.runDays === 'Everyday' && schedule.departureDate && schedule.arrivalDate
+                          ? `Specific: ${formatDate(schedule.departureDate)}`
+                          : schedule.runDays}
                       </div>
                     </div>
                   </td>

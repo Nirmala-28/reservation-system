@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bar, Pie, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { CURRENCY_CONFIG } from '../../config/currency';
 import useApi from '../../hooks/useApi';
 import StatsCard from './StatsCard';
 import styles from './StatsChart.module.css';
@@ -186,7 +187,7 @@ const StatsChart = () => {
     return {
       labels: data.labels || [],
       datasets: [{
-        label: dataKey === 'revenue' ? 'Revenue (Rs.)' : 
+        label: dataKey === 'revenue' ? `Revenue (Rs.)` : 
               dataKey === 'bookings' ? 'Bookings' : 'Popular Trains',
         data: data.data || [],
         backgroundColor: dataKey === 'popularTrains' ? [

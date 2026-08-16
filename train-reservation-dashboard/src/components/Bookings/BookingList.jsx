@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useApi from '../../hooks/useApi';
+import { CURRENCY_CONFIG } from '../../config/currency';
 import styles from './BookingList.module.css';
 
 const BookingList = () => {
@@ -88,7 +89,7 @@ const BookingList = () => {
     }
 
     return true;
-  }) : [];
+  }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : []; // Ensure client-side sorting by newest first
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -106,15 +107,15 @@ const BookingList = () => {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return 'Rs.0';
+    if (!amount) return CURRENCY_CONFIG.symbol + '0';
     const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-    return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return CURRENCY_CONFIG.symbol + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
   const exportToCSV = () => {
     const headers = [
       'PNR', 'Train Number', 'Train Name', 'User Name', 'User Email',
-      'Travel Date', 'Class', 'Passengers', 'Total Amount', 'Status', 'Created At'
+      'Travel Date', 'Class', 'Passengers', 'Total Amount (रू)', 'Status', 'Created At'
     ];
     
     const csvData = filteredBookings.map(booking => [

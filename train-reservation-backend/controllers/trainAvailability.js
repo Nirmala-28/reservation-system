@@ -3,6 +3,7 @@ const TrainAvailability = require('../models/TrainAvailability');
 const Train = require('../models/Train');
 const TravelInventory = require('../models/TravelInventory');
 const DijkstraSolver = require('../utils/dijkstra');
+const { dijkstraCache, trainAvailabilityCache } = require('../utils/cache');
 
 // @desc    Get all train availabilities
 // @route   GET /api/train-availability
@@ -13,7 +14,8 @@ exports.getTrainAvailabilities = async (req, res) => {
 
     // Filter out stale/expired train schedules:
     // - Non-Everyday trains: remove if departureDate is in the past
-    // - Everyday trains: remove if departureDate is more than 7 days old
+    // - Everyday trains with specific dates: treat as specific-date trains
+    // - Truly Everyday trains (no specific dates): remove if departureDate is more than 7 days old
     //   (they should be updated by the admin; old records are stale duplicates)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -23,11 +25,14 @@ exports.getTrainAvailabilities = async (req, res) => {
     const active = availabilities.filter(train => {
       if (!train.departureDate) return true;
       const trainDate = new Date(train.departureDate);
-      if (train.runDays === 'Everyday') {
-        // Keep Everyday trains only if their schedule date is recent (within last 7 days or future)
+      const hasSpecificDates = train.departureDate && train.arrivalDate;
+      const isTrulyEveryday = train.runDays === 'Everyday' && !hasSpecificDates;
+      
+      if (isTrulyEveryday) {
+        // Keep truly Everyday trains only if their schedule date is recent (within last 7 days or future)
         return trainDate >= sevenDaysAgo;
       }
-      // Non-recurring: only future trains
+      // Non-recurring or specific-date trains: only future trains
       return trainDate >= today;
     });
 
@@ -73,6 +78,16 @@ exports.searchTrains = async (req, res) => {
   try {
     const { departureStation, arrivalStation, departureDate } = req.body;
     
+    // Create cache key for this search
+    const cacheKey = `search:${departureStation}:${arrivalStation}:${departureDate}`;
+    
+    // Check cache first
+    const cachedData = trainAvailabilityCache.get(cacheKey);
+    if (cachedData) {
+      console.log('[Cache] Returning cached search results for:', cacheKey);
+      return res.status(200).json(cachedData);
+    }
+    
     // Find trains matching the stations
     let availabilities = await TrainAvailability.find({
       departureStation: new RegExp(departureStation, 'i'),
@@ -80,9 +95,18 @@ exports.searchTrains = async (req, res) => {
     });
 
     // Optionally filter by departureDate taking into account runDays='Everyday'
+    // Trains with specific departure/arrival dates should only match those exact dates
+    // even if marked as "Everyday"
     if (departureDate) {
       availabilities = availabilities.filter(train => {
-        return train.runDays === 'Everyday' || train.departureDate === departureDate;
+        const hasSpecificDates = train.departureDate && train.arrivalDate;
+        const isTrulyEveryday = train.runDays === 'Everyday' && !hasSpecificDates;
+        
+        // Truly everyday trains match any search date
+        if (isTrulyEveryday) return true;
+        
+        // Trains with specific dates only match if the search date matches their departure date
+        return train.departureDate === departureDate;
       });
     }
 
@@ -90,7 +114,13 @@ exports.searchTrains = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     availabilities = availabilities.filter(train => {
-      if (train.runDays === 'Everyday') return true; // recurring trains never expire
+      const hasSpecificDates = train.departureDate && train.arrivalDate;
+      const isTrulyEveryday = train.runDays === 'Everyday' && !hasSpecificDates;
+      
+      // Truly everyday trains never expire
+      if (isTrulyEveryday) return true;
+      
+      // Trains with specific dates or non-everyday trains expire if date is in the past
       if (!train.departureDate) return true;
       const trainDate = new Date(train.departureDate);
       return trainDate >= today;
@@ -98,10 +128,18 @@ exports.searchTrains = async (req, res) => {
 
     // For Everyday trains, override the stored departureDate with the user's searched date
     // so the UI shows the correct travel date instead of the old DB date
+    // However, if the train has specific departure/arrival dates set, treat it as a specific-date
+    // train even if marked as "Everyday" - this prevents trains with specific schedules from
+    // appearing on dates they don't actually run
     const searchedDate = departureDate || new Date().toISOString().split('T')[0];
     availabilities = availabilities.map(train => {
       const obj = train.toObject ? train.toObject() : { ...train };
-      if (train.runDays === 'Everyday') {
+      
+      // Check if this is truly an everyday train or has specific dates
+      const hasSpecificDates = train.departureDate && train.arrivalDate;
+      const isTrulyEveryday = train.runDays === 'Everyday' && !hasSpecificDates;
+      
+      if (isTrulyEveryday) {
         obj.departureDate = searchedDate;
         // Compute arrivalDate = searchedDate + (original arrival offset days)
         if (train.departureDate && train.arrivalDate) {
@@ -113,6 +151,7 @@ exports.searchTrains = async (req, res) => {
           obj.arrivalDate = newArr.toISOString().split('T')[0];
         }
       }
+      // For trains with specific dates, keep the original dates from database
       return obj;
     });
 
@@ -246,7 +285,7 @@ exports.searchTrains = async (req, res) => {
       }
     }
 
-    res.status(200).json({
+    const responseData = {
       success: true,
       count: availabilities.length,
       data: availabilities,
@@ -257,7 +296,13 @@ exports.searchTrains = async (req, res) => {
         : (dijkstraResult?.found
             ? `No direct trains — Dijkstra suggests: ${dijkstraResult.message}`
             : 'No trains or connecting routes found')
-    });
+    };
+    
+    // Cache the result for future requests
+    trainAvailabilityCache.set(cacheKey, responseData);
+    console.log('[Cache] Cached search results for:', cacheKey);
+    
+    res.status(200).json(responseData);
   } catch (error) {
     res.status(400).json({ 
       success: false,
