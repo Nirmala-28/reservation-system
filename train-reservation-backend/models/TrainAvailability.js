@@ -38,7 +38,7 @@ const trainAvailabilitySchema = new mongoose.Schema({
   arrivalStation: String,
   arrivalDate: String,
   duration: String,
-  runDays: String,
+  // runDays: String, // REMOVED - All schedules use specific dates
   fareOptions: [fareOptionSchema],
 
   // Segment Tree algorithm — ordered list of stops for this route

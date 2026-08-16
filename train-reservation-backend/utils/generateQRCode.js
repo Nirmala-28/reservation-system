@@ -2,24 +2,14 @@ const QRCode = require('qrcode');
 
 const generateQRCode = async (data) => {
   try {
-    // Create a more structured QR code data with URL format
-    const qrData = {
-      type: 'TRAIN_TICKET',
-      pnr: data.pnr,
-      trainNumber: data.trainNumber,
-      trainName: data.trainName,
-      date: data.date,
-      passenger: data.passenger,
-      class: data.class,
-      timestamp: new Date().toISOString(),
-      // Add URL for web scanning
-      url: `https://nepalrailway.com/ticket/${data.pnr}` // Placeholder URL
-    };
+    // Create a simpler, more scannable QR code with minimal data
+    // Use a URL format that can be easily scanned and parsed
+    const qrString = `TR${data.pnr}|${data.trainNumber}|${data.date}|${data.class}`;
     
-    const qrString = JSON.stringify(qrData);
     const qrCode = await QRCode.toDataURL(qrString, {
-      width: 300,
-      margin: 2,
+      width: 400,
+      margin: 3,
+      errorCorrectionLevel: 'H', // High error correction for better scanning
       color: {
         dark: '#000000',
         light: '#ffffff'

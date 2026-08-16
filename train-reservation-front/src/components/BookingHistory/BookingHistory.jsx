@@ -5,7 +5,7 @@ import {
   FaTrain, 
   FaUser, 
   FaCalendarAlt, 
-  FaRupeeSign,
+  FaMoneyBillWave,
   FaTicketAlt,
   FaInfoCircle,
   FaDownload,
@@ -314,10 +314,10 @@ const BookingHistory = () => {
                   </div>
                   
                   <div className={styles.detailItem}>
-                    <FaRupeeSign className={styles.detailIcon} />
+                    <FaMoneyBillWave className={styles.detailIcon} />
                     <span className={styles.detailLabel}>Amount:</span>
                     <span className={styles.detailValue}>
-                      Rs.{(booking.paymentDetails && booking.paymentDetails.total) || 
+                      NPR {(booking.paymentDetails && booking.paymentDetails.total) || 
                         (booking.totalAmount) || '0'}
                     </span>
                   </div>

@@ -444,6 +444,7 @@ const TrainSearch = () => {
                 layout
               >
               {(() => {
+                // Check if ANY class has available seats (not all are full)
                 const isTrainFull = train.fareOptions && train.fareOptions.length > 0 &&
                   train.fareOptions.every(f => f.availableSeats === 0 || f.availableSeats === undefined);
                 const hasWaitlistCapacity = train.fareOptions?.some(
@@ -480,11 +481,6 @@ const TrainSearch = () => {
                       <div className={styles.station}>{train.departureStation}</div>
                       <div className={styles.trainDate}>
                         {train.departureDate ? new Date(train.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                        {train.runDays === 'Everyday' && !train.departureDate && (
-                          <span style={{ fontSize: '0.7rem', color: '#6b7280', marginLeft: '4px' }}>
-                            (Daily service)
-                          </span>
-                        )}
                       </div>
                     </motion.div>
                     
@@ -512,29 +508,16 @@ const TrainSearch = () => {
                   
                   <div className={styles.trainInfo}>
                     <p className={styles.runDays}>
-                      <strong>Runs on:</strong> 
-                      <motion.span 
+                      <strong>Scheduled for:</strong>
+                      <motion.span
                         className={styles.badge}
                         whileHover={{ scale: 1.05 }}
-                        style={{
-                          background: train.runDays === 'Everyday' && train.departureDate && train.arrivalDate 
-                            ? '#fef3c7' // Different color for specific-date trains marked as Everyday
-                            : undefined,
-                          color: train.runDays === 'Everyday' && train.departureDate && train.arrivalDate
-                            ? '#d97706'
-                            : undefined
-                        }}
                       >
-                        {train.runDays === 'Everyday' && train.departureDate && train.arrivalDate
-                          ? `Specific Date (${new Date(train.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
-                          : train.runDays}
+                        {train.departureDate
+                          ? new Date(train.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                          : 'Date not set'}
                       </motion.span>
                     </p>
-                    {train.runDays === 'Everyday' && train.departureDate && train.arrivalDate && (
-                      <p className={styles.processingInfo} style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                        <strong>Note:</strong> This train runs only on specific dates
-                      </p>
-                    )}
                     {train.timeQuantum && (
                       <p className={styles.processingInfo}>
                         <strong>Processing Time:</strong> {train.timeQuantum} minutes

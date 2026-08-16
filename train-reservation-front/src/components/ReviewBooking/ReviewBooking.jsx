@@ -64,11 +64,7 @@ const ReviewBooking = () => {
     return parseCurrency(priceString);
   };
 
-  // Local formatCurrency for fallback (should use centralized config)
-  const formatCurrency = (amount) => {
-    const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-    return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
+
 
   // Payment method options - Stripe commented out
   const paymentMethods = [
@@ -909,7 +905,7 @@ const ReviewBooking = () => {
               </div>
               
               <div className={styles.fareItem}>
-                <span>VAT ({VAT_PERCENTAGE}%)</span>
+                <span>VAT ({CURRENCY_CONFIG.taxRate}%)</span>
                 <span>{formatCurrency(fareBreakdown.vatAmount)}</span>
               </div>
               

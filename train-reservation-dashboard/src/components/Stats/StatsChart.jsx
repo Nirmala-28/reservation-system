@@ -187,7 +187,7 @@ const StatsChart = () => {
     return {
       labels: data.labels || [],
       datasets: [{
-        label: dataKey === 'revenue' ? `Revenue (Rs.)` : 
+        label: dataKey === 'revenue' ? `Revenue (NPR)` : 
               dataKey === 'bookings' ? 'Bookings' : 'Popular Trains',
         data: data.data || [],
         backgroundColor: dataKey === 'popularTrains' ? [
@@ -307,7 +307,7 @@ const StatsChart = () => {
       <div className={styles.statsCards}>
         <StatsCard 
           title="Total Revenue" 
-          value={`Rs.${currentTotals.revenue.toLocaleString()}`} 
+          value={`NPR ${currentTotals.revenue.toLocaleString()}`} 
           change={currentTotals.revenueChange} 
         />
         <StatsCard 

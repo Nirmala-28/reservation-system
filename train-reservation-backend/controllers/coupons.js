@@ -31,7 +31,7 @@ exports.applyCoupon = async (req, res) => {
     // Check minimum order value
     if (totalAmount < coupon.minOrderValue) {
       return res.status(400).json({ 
-        message: `Minimum order value for this coupon is Rs.${coupon.minOrderValue}` 
+        message: `Minimum order value for this coupon is NPR ${coupon.minOrderValue}` 
       });
     }
 

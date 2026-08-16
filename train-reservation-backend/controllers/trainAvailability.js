@@ -25,14 +25,7 @@ exports.getTrainAvailabilities = async (req, res) => {
     const active = availabilities.filter(train => {
       if (!train.departureDate) return true;
       const trainDate = new Date(train.departureDate);
-      const hasSpecificDates = train.departureDate && train.arrivalDate;
-      const isTrulyEveryday = train.runDays === 'Everyday' && !hasSpecificDates;
-      
-      if (isTrulyEveryday) {
-        // Keep truly Everyday trains only if their schedule date is recent (within last 7 days or future)
-        return trainDate >= sevenDaysAgo;
-      }
-      // Non-recurring or specific-date trains: only future trains
+      // All trains use specific dates - only show future trains
       return trainDate >= today;
     });
 
@@ -94,64 +87,26 @@ exports.searchTrains = async (req, res) => {
       arrivalStation: new RegExp(arrivalStation, 'i'),
     });
 
-    // Optionally filter by departureDate taking into account runDays='Everyday'
-    // Trains with specific departure/arrival dates should only match those exact dates
-    // even if marked as "Everyday"
+    // Filter by departureDate - all trains use specific dates
     if (departureDate) {
       availabilities = availabilities.filter(train => {
-        const hasSpecificDates = train.departureDate && train.arrivalDate;
-        const isTrulyEveryday = train.runDays === 'Everyday' && !hasSpecificDates;
-        
-        // Truly everyday trains match any search date
-        if (isTrulyEveryday) return true;
-        
-        // Trains with specific dates only match if the search date matches their departure date
         return train.departureDate === departureDate;
       });
     }
 
-    // Filter out expired trains — non-recurring trains whose date has already passed
+    // Filter out expired trains
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     availabilities = availabilities.filter(train => {
-      const hasSpecificDates = train.departureDate && train.arrivalDate;
-      const isTrulyEveryday = train.runDays === 'Everyday' && !hasSpecificDates;
-      
-      // Truly everyday trains never expire
-      if (isTrulyEveryday) return true;
-      
-      // Trains with specific dates or non-everyday trains expire if date is in the past
       if (!train.departureDate) return true;
       const trainDate = new Date(train.departureDate);
       return trainDate >= today;
     });
 
-    // For Everyday trains, override the stored departureDate with the user's searched date
-    // so the UI shows the correct travel date instead of the old DB date
-    // However, if the train has specific departure/arrival dates set, treat it as a specific-date
-    // train even if marked as "Everyday" - this prevents trains with specific schedules from
-    // appearing on dates they don't actually run
+    // Keep original dates from database (all trains are date-specific)
     const searchedDate = departureDate || new Date().toISOString().split('T')[0];
     availabilities = availabilities.map(train => {
       const obj = train.toObject ? train.toObject() : { ...train };
-      
-      // Check if this is truly an everyday train or has specific dates
-      const hasSpecificDates = train.departureDate && train.arrivalDate;
-      const isTrulyEveryday = train.runDays === 'Everyday' && !hasSpecificDates;
-      
-      if (isTrulyEveryday) {
-        obj.departureDate = searchedDate;
-        // Compute arrivalDate = searchedDate + (original arrival offset days)
-        if (train.departureDate && train.arrivalDate) {
-          const origDep = new Date(train.departureDate);
-          const origArr = new Date(train.arrivalDate);
-          const diffDays = Math.round((origArr - origDep) / (1000 * 60 * 60 * 24));
-          const newArr = new Date(searchedDate);
-          newArr.setDate(newArr.getDate() + diffDays);
-          obj.arrivalDate = newArr.toISOString().split('T')[0];
-        }
-      }
-      // For trains with specific dates, keep the original dates from database
       return obj;
     });
 
@@ -164,12 +119,23 @@ exports.searchTrains = async (req, res) => {
     const inventoryByClass = new Map(
       inventories.map(item => [`${item.trainAvailability}:${item.classInfo}`, item.availableSeats])
     );
+    
+    console.log(`[Search] Found ${inventories.length} inventory records for ${searchedDate}`);
+    inventories.forEach(inv => {
+      console.log(`  - Train: ${inv.trainAvailability}, Class: ${inv.classInfo}, Available: ${inv.availableSeats}`);
+    });
+    
     availabilities = availabilities.map(train => ({
       ...train,
-      fareOptions: (train.fareOptions || []).map(fare => ({
-        ...fare,
-        availableSeats: inventoryByClass.get(`${train._id}:${fare.class}`) ?? fare.availableSeats,
-      })),
+      fareOptions: (train.fareOptions || []).map(fare => {
+        const inventoryAvailable = inventoryByClass.get(`${train._id}:${fare.class}`);
+        const finalAvailable = inventoryAvailable !== undefined ? inventoryAvailable : fare.availableSeats;
+        console.log(`[Search] Train ${train.trainNumber} Class ${fare.class}: FareOptions=${fare.availableSeats}, Inventory=${inventoryAvailable}, Final=${finalAvailable}`);
+        return {
+          ...fare,
+          availableSeats: finalAvailable,
+        };
+      }),
     }));
 
     // Apply Round Robin metrics to all direct results

@@ -5,7 +5,7 @@ import { CURRENCY_CONFIG, formatCurrency, parseCurrency } from "../../config/cur
 import { 
   FaTrain, FaUser, FaTag, FaCreditCard, 
   FaWallet, FaCheck, FaShieldAlt, FaClock,
-  FaArrowLeft, FaSpinner, FaPaypal
+  FaArrowLeft, FaSpinner, FaPaypal, FaMoneyBillWave
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./PaymentModal.module.css";
@@ -63,11 +63,7 @@ const PaymentModal = () => {
     return parseCurrency(priceString);
   };
 
-  // Local formatCurrency for fallback (should use centralized config)
-  const formatCurrency = (amount) => {
-    const numAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0;
-    return 'Rs.' + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
+
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -396,7 +392,7 @@ const PaymentModal = () => {
             transition={{ delay: 0.3 }}
           >
             <h2 className={styles.cardTitle}>
-              <FaRupeeSign className={styles.cardIcon} /> Fare Breakdown
+              <FaMoneyBillWave className={styles.cardIcon} /> Fare Breakdown
             </h2>
             <div className={styles.fareDetails}>
               {bookingDetails.fareBreakdown ? (

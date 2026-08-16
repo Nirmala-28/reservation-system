@@ -1,6 +1,6 @@
 // Currency Configuration for Nepal Train Reservation System
 export const CURRENCY_CONFIG = {
-  symbol: 'Rs.',          // Nepalese Rupee symbol (more compatible than रू)
+  symbol: 'NPR ',         // Nepalese Rupee (NPR) - explicit for Nepal
   code: 'NPR',           // ISO currency code
   name: 'Nepalese Rupee', // Currency name
   taxName: 'VAT',        // Value Added Tax (Nepal)
@@ -18,7 +18,7 @@ export const formatCurrency = (amount) => {
 // Utility function to parse currency strings for calculations
 export const parseCurrency = (priceString) => {
   if (typeof priceString === 'number') return priceString;
-  return parseFloat(priceString.toString().replace(/[रूRs.,\s]/g, '')) || 0;
+  return parseFloat(priceString.toString().replace(/[रूNPRRs.,\s]/g, '')) || 0;
 };
 
 // Tax calculation helper

@@ -87,8 +87,12 @@ const TrainDetailsModal = ({ train, onClose, departureDate }) => {
           <div className={styles.detailsSection}>
             <h4>Train Information</h4>
             <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Runs on:</span>
-              <span className={styles.detailValue}>{train.runDays || 'Daily'}</span>
+              <span className={styles.detailLabel}>Scheduled for:</span>
+              <span className={styles.detailValue}>
+                {train.departureDate
+                  ? new Date(train.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : 'Date not set'}
+              </span>
             </div>
             
             {train.runningStatus && (

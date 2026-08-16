@@ -134,7 +134,7 @@ const CouponForm = () => {
 
           {coupon.discountType === 'percentage' && (
             <div className={styles.formGroup}>
-              <label>Maximum Discount (Rs.)</label>
+              <label>Maximum Discount (NPR)</label>
               <input
                 type="number"
                 name="maxDiscount"
@@ -146,7 +146,7 @@ const CouponForm = () => {
           )}
 
           <div className={styles.formGroup}>
-            <label>Minimum Order Value (Rs.) <span className={styles.required}>*</span></label>
+            <label>Minimum Order Value (NPR) <span className={styles.required}>*</span></label>
             <input
               type="number"
               name="minOrderValue"

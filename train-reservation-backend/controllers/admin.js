@@ -4,6 +4,7 @@ const TrainAvailability = require('../models/TrainAvailability');
 const Meal = require('../models/Meal');
 const Coupon = require('../models/Coupon');
 const Booking = require('../models/Booking');
+const TravelInventory = require('../models/TravelInventory');
 
 // Train Management
 exports.createTrain = async (req, res) => {
@@ -120,6 +121,241 @@ exports.createTrainAvailability = async (req, res) => {
       data: availability,
       allocationResult: null,
       message: 'Train schedule created successfully with Round Robin algorithm optimization'
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+// Get single train availability by ID
+exports.getTrainAvailability = async (req, res) => {
+  try {
+    const availability = await TrainAvailability.findById(req.params.id);
+    if (!availability) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Train availability not found' 
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: availability
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+// Add fare option to existing train availability
+exports.addFareOption = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fareOption } = req.body;
+    
+    const availability = await TrainAvailability.findById(id);
+    if (!availability) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Train availability not found' 
+      });
+    }
+
+    availability.fareOptions.push(fareOption);
+    await availability.save();
+    
+    res.status(200).json({
+      success: true,
+      data: availability,
+      message: 'Fare option added successfully'
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+// Update fare option in train availability
+exports.updateFareOption = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { class: classInfo, fareOption } = req.body;
+    
+    const availability = await TrainAvailability.findById(id);
+    if (!availability) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Train availability not found' 
+      });
+    }
+
+    const fareIndex = availability.fareOptions.findIndex(f => f.class === classInfo);
+    if (fareIndex === -1) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Fare option not found' 
+      });
+    }
+
+    availability.fareOptions[fareIndex] = { ...availability.fareOptions[fareIndex], ...fareOption };
+    await availability.save();
+    
+    res.status(200).json({
+      success: true,
+      data: availability,
+      message: 'Fare option updated successfully'
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+// Remove fare option from train availability
+exports.removeFareOption = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { class: classInfo } = req.body;
+    
+    const availability = await TrainAvailability.findById(id);
+    if (!availability) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Train availability not found' 
+      });
+    }
+
+    availability.fareOptions = availability.fareOptions.filter(f => f.class !== classInfo);
+    await availability.save();
+    
+    res.status(200).json({
+      success: true,
+      data: availability,
+      message: 'Fare option removed successfully'
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+// Debug: Check inventory for a specific train and date
+exports.checkInventory = async (req, res) => {
+  try {
+    const { trainAvailabilityId, travelDate, classInfo } = req.body;
+    
+    const availability = await TrainAvailability.findById(trainAvailabilityId);
+    if (!availability) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Train availability not found' 
+      });
+    }
+
+    const fareOption = availability.fareOptions.find(f => f.class === classInfo);
+    if (!fareOption) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Fare option not found' 
+      });
+    }
+
+    const TravelInventory = require('../models/TravelInventory');
+    const { dateRange } = require('../utils/travelInventory');
+    const { key } = dateRange(travelDate);
+    
+    const inventory = await TravelInventory.findOne({
+      trainAvailability: trainAvailabilityId,
+      travelDate: key,
+      classInfo: classInfo
+    });
+
+    const bookings = await Booking.find({
+      trainAvailability: trainAvailabilityId,
+      classInfo: classInfo,
+      status: { $in: ['Pending', 'Confirmed'] },
+      travelDate: { $gte: new Date(`${key}T00:00:00.000Z`), $lt: new Date(`${key}T23:59:59.999Z`) }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        trainAvailability: {
+          id: availability._id,
+          trainNumber: availability.trainNumber,
+          trainName: availability.trainName,
+          departureDate: availability.departureDate,
+          arrivalDate: availability.arrivalDate
+        },
+        fareOption: fareOption,
+        inventory: inventory,
+        bookings: bookings,
+        bookingCount: bookings.length,
+        calculatedAvailable: fareOption.totalSeats - bookings.length,
+        inventoryAvailable: inventory?.availableSeats
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
+  }
+};
+
+// Reset inventory for a specific train and date
+exports.resetInventory = async (req, res) => {
+  try {
+    const { trainAvailabilityId, travelDate, classInfo } = req.body;
+    
+    const availability = await TrainAvailability.findById(trainAvailabilityId);
+    if (!availability) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Train availability not found' 
+      });
+    }
+
+    const fareOption = availability.fareOptions.find(f => f.class === classInfo);
+    if (!fareOption) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Fare option not found' 
+      });
+    }
+
+    const TravelInventory = require('../models/TravelInventory');
+    const { dateRange } = require('../utils/travelInventory');
+    const { key } = dateRange(travelDate);
+    
+    // Delete existing inventory and let it be recreated with correct availability
+    await TravelInventory.deleteMany({
+      trainAvailability: trainAvailabilityId,
+      travelDate: key,
+      classInfo: classInfo
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Inventory reset successfully. Will be recalculated on next booking.',
+      data: {
+        trainAvailabilityId,
+        travelDate,
+        classInfo,
+        totalSeats: fareOption.totalSeats
+      }
     });
   } catch (error) {
     res.status(400).json({ 
@@ -370,14 +606,40 @@ exports.getBookings = async (req, res) => {
     const bookings = await Booking.find()
       .populate('user', 'name email phone')
       .populate('train', 'trainNumber trainName')
-      .populate('trainAvailability', 'trainNumber trainName runDays algorithmType')
+      .populate('trainAvailability', 'trainNumber trainName algorithmType')
       .populate('meals.meal')
       .sort({ createdAt: -1 }); // Sort by creation date descending (newest first)
+
+    // Enhance bookings with real-time inventory data
+    const inventoryByClass = new Map();
+    const inventories = await TravelInventory.find({});
+    inventories.forEach(inv => {
+      inventoryByClass.set(`${inv.trainAvailability}:${inv.travelDate}:${inv.classInfo}`, inv.availableSeats);
+    });
+
+    const enhancedBookings = bookings.map(booking => {
+      const bookingObj = booking.toObject ? booking.toObject() : { ...booking };
+      if (booking.trainAvailability && bookingObj.trainAvailability) {
+        const travelDateKey = booking.travelDate ? booking.travelDate.toISOString().split('T')[0] : 
+          bookingObj.travelDate ? new Date(bookingObj.travelDate).toISOString().split('T')[0] : '';
+        
+        if (travelDateKey && booking.classInfo) {
+          const inventoryKey = `${booking.trainAvailability._id}:${travelDateKey}:${booking.classInfo}`;
+          const realAvailable = inventoryByClass.get(inventoryKey);
+          
+          if (realAvailable !== undefined) {
+            bookingObj.realTimeAvailable = realAvailable;
+            bookingObj.usesInventorySystem = true;
+          }
+        }
+      }
+      return bookingObj;
+    });
 
     res.status(200).json({
       success: true,
       count: bookings.length,
-      data: bookings,
+      data: enhancedBookings,
     });
   } catch (error) {
     res.status(400).json({ message: error.message });

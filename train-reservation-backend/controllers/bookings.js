@@ -220,7 +220,7 @@ exports.createBooking = async (req, res) => {
         if (subtotal < coupon.minOrderValue) {
           return res.status(400).json({
             success: false,
-            message: `Minimum order value for this coupon is Rs.${coupon.minOrderValue}`
+            message: `Minimum order value for this coupon is NPR ${coupon.minOrderValue}`
           });
         }
 
@@ -429,7 +429,7 @@ exports.createBooking = async (req, res) => {
               <p><strong>Departure:</strong> ${trainAvailability.departureTime} on ${new Date(travelDate).toLocaleDateString()}</p>
               <p><strong>Arrival:</strong> ${trainAvailability.arrivalTime} on ${new Date(trainAvailability.arrivalDate).toLocaleDateString()}</p>
               <p><strong>Class:</strong> ${classInfo}</p>
-              <p><strong>Total Amount:</strong> Rs.${totalAmount.toFixed(2)}</p>
+              <p><strong>Total Amount:</strong> NPR ${totalAmount.toFixed(2)}</p>
             </div>
             
             <h3 style="color: #333; margin-top: 30px;">Passenger Details</h3>

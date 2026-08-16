@@ -8,20 +8,70 @@ const { id } = useParams();
 const navigate = useNavigate();
 const location = useLocation();
 const { get, post, put } = useApi();
- 
 
 // Get data from navigation state
 const existingData = location.state?.availability;
 const preselectedTrain = location.state?.trainNumber && location.state?.trainName
 ? { trainNumber: location.state.trainNumber, trainName: location.state.trainName }
 : null;
- 
+
+console.log('[ScheduleForm] Component mounted');
+console.log('[ScheduleForm] Route ID:', id);
+console.log('[ScheduleForm] Location state:', location.state);
+console.log('[ScheduleForm] Existing data from state:', existingData);
+console.log('[ScheduleForm] Preselected train:', preselectedTrain);
+console.log('[ScheduleForm] Will fetch data:', id && !existingData); 
 
 const [loading, setLoading] = useState(false);
 const [error, setError] = useState(null);
 const [success, setSuccess] = useState(null);
 const [trains, setTrains] = useState([]);
 const [trainsLoaded, setTrainsLoaded] = useState(false); // Add loading state tracker
+const [editingFareOption, setEditingFareOption] = useState(null);
+const [showFareModal, setShowFareModal] = useState(false);
+const [dataLoading, setDataLoading] = useState(false); // Loading state for fetching existing data
+
+// Fetch existing data function
+const fetchExistingData = async () => {
+  console.log('[ScheduleForm] Fetching existing data for ID:', id);
+  if (id && !existingData) {
+    try {
+      setDataLoading(true);
+      const response = await get(`/api/admin/train-availability/${id}`);
+      console.log('[ScheduleForm] API response:', response);
+      if (response.success) {
+        const data = response.data;
+        setSchedule({
+          trainNumber: data.trainNumber || '',
+          trainName: data.trainName || '',
+          rating: data.rating || 0,
+          departureTime: data.departureTime || '',
+          departureStation: data.departureStation || '',
+          departureDate: data.departureDate || '',
+          arrivalTime: data.arrivalTime || '',
+          arrivalStation: data.arrivalStation || '',
+          arrivalDate: data.arrivalDate || '',
+          duration: data.duration || '',
+
+          algorithmType: data.algorithmType || 'RoundRobin',
+          timeQuantum: data.timeQuantum || 30,
+          fareOptions: Array.isArray(data.fareOptions) ? data.fareOptions : []
+        });
+        console.log('[ScheduleForm] Data loaded successfully');
+      } else {
+        console.error('[ScheduleForm] API returned false success');
+        setError('Failed to load schedule data');
+      }
+    } catch (error) {
+      console.error('[ScheduleForm] Error fetching schedule data:', error);
+      setError('Failed to load schedule data');
+    } finally {
+      setDataLoading(false);
+    }
+  } else {
+    console.log('[ScheduleForm] Skipping fetch - id:', id, 'existingData:', !!existingData);
+  }
+};
  
 
 const [schedule, setSchedule] = useState(() => {
@@ -37,7 +87,7 @@ arrivalTime: existingData.arrivalTime || '',
 arrivalStation: existingData.arrivalStation || '',
 arrivalDate: existingData.arrivalDate || '',
 duration: existingData.duration || '',
-runDays: existingData.runDays || 'Everyday',
+
 algorithmType: 'RoundRobin', // Always Round Robin
 timeQuantum: existingData.timeQuantum || 30,
 fareOptions: Array.isArray(existingData.fareOptions) ? existingData.fareOptions : []
@@ -56,7 +106,7 @@ arrivalTime: '',
 arrivalStation: '',
 arrivalDate: '',
 duration: '',
-runDays: 'Everyday',
+
 algorithmType: 'RoundRobin', // Always Round Robin
 timeQuantum: 30,
 fareOptions: []
@@ -99,9 +149,9 @@ fetchTrains();
 // Show warning if editing without data
 useEffect(() => {
 if (id && !existingData) {
-setError('Schedule data not found. Please go back to the list and try again.');
+fetchExistingData();
 }
-}, [id, existingData]);
+}, [id]);
 
 const handleChange = (e) => {
 const { name, value, type } = e.target;
@@ -130,12 +180,14 @@ trainName: selectedTrain.trainName
 
 const handleFareOptionAdd = () => {
 const { class: fareClass, price, totalSeats, availableSeats } = newFareOption;
- 
+
 
 if (fareClass?.trim() && price?.trim() && totalSeats) {
 const seatsNum = parseInt(totalSeats) || 0;
-const availableNum = parseInt(availableSeats) || seatsNum;
- 
+const availableNum = availableSeats !== '' && availableSeats !== undefined 
+  ? parseInt(availableSeats) 
+  : seatsNum; // Default to total seats if not specified
+
 
 setSchedule(prev => ({
 ...prev,
@@ -151,7 +203,7 @@ color: newFareOption.color || '#90EE90'
 }
 ]
 }));
- 
+
 
 setNewFareOption({
 class: '',
@@ -169,6 +221,104 @@ setSchedule(prev => ({
 ...prev,
 fareOptions: Array.isArray(prev.fareOptions) ? prev.fareOptions.filter((_, i) => i !== index) : []
 }));
+};
+
+const handleFareOptionEdit = (index) => {
+const fareOption = schedule.fareOptions[index];
+setEditingFareOption({ ...fareOption, index });
+setShowFareModal(true);
+};
+
+const handleFareOptionSave = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+    
+    const { index, ...fareOptionData } = editingFareOption;
+    
+    // Update existing fare option
+    const response = await put(`/api/admin/train-availability/${id}/fare-options/${fareOptionData.class}`, {
+      class: fareOptionData.class,
+      fareOption: fareOptionData
+    });
+    
+    if (response.success) {
+      // Update local state
+      setSchedule(prev => ({
+        ...prev,
+        fareOptions: Array.isArray(prev.fareOptions) 
+          ? prev.fareOptions.map((f, i) => i === index ? fareOptionData : f)
+          : []
+      }));
+      
+      setSuccess('Fare option updated successfully!');
+      setShowFareModal(false);
+      setEditingFareOption(null);
+      
+      setTimeout(() => setSuccess(null), 3000);
+    } else {
+      setError(response.message || 'Failed to update fare option');
+    }
+  } catch (error) {
+    console.error('Error updating fare option:', error);
+    setError('Failed to update fare option');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleSyncAvailability = async (index) => {
+  try {
+    setLoading(true);
+    setError(null);
+    
+    const fare = schedule.fareOptions[index];
+    if (fare.realTimeAvailable === undefined) {
+      setError('Please load real-time availability first');
+      return;
+    }
+    
+    // Update the fare option with real-time availability (only send relevant fields)
+    const updatedFare = {
+      class: fare.class,
+      price: fare.price,
+      totalSeats: fare.totalSeats,
+      availableSeats: fare.realTimeAvailable,
+      waitingList: fare.waitingList,
+      color: fare.color
+    };
+    
+    const response = await put(`/api/admin/train-availability/${id}/fare-options/${fare.class}`, {
+      class: fare.class,
+      fareOption: updatedFare
+    });
+    
+    if (response.success) {
+      // Update local state with the synced data
+      const syncedFare = {
+        ...fare,
+        availableSeats: fare.realTimeAvailable,
+        realTimeAvailable: fare.realTimeAvailable // Keep this for UI display
+      };
+      
+      setSchedule(prev => ({
+        ...prev,
+        fareOptions: Array.isArray(prev.fareOptions) 
+          ? prev.fareOptions.map((f, i) => i === index ? syncedFare : f)
+          : []
+      }));
+      
+      setSuccess(`Synced ${fare.class} availability: ${fare.availableSeats} → ${fare.realTimeAvailable}`);
+      setTimeout(() => setSuccess(null), 3000);
+    } else {
+      setError(response.message || 'Failed to sync availability');
+    }
+  } catch (error) {
+    console.error('Error syncing availability:', error);
+    setError('Failed to sync availability');
+  } finally {
+    setLoading(false);
+  }
 };
 
 const handleFareOptionChange = (e) => {
@@ -285,7 +435,7 @@ setLoading(false);
 };
 
 // Error state
-if (error && id && !existingData) {
+if (error && id) {
 return (
 <div className={styles.scheduleForm}>
 <div className={styles.error}>
@@ -301,23 +451,33 @@ Back to Schedules List
 );
 }
 
+// Loading state for data fetching
+if (dataLoading) {
+return (
+<div className={styles.scheduleForm}>
+<div className={styles.loading}>
+<div>📡 Loading schedule data...</div>
+</div>
+</div>
+);
+}
+
 return (
 <div className={styles.scheduleForm}>
 <h2>{id ? 'Edit Train Schedule' : 'Create New Train Schedule'}</h2>
- 
 
-{id && existingData && (
+
+{id && (existingData || schedule.trainNumber) && (
 <div className={styles.editingInfo}>
-📝 Editing: {existingData.trainNumber} - {existingData.trainName}
+📝 Editing: {schedule.trainNumber} - {schedule.trainName}
 </div>
 )}
- 
 
 {error && (
 <div className={styles.error}>
 <p>{error}</p>
-</div>
-)}
+</div>)} 
+
  
 
 {success && (
@@ -516,41 +676,66 @@ readOnly
 />
 <small className={styles.helpText}>Automatically calculated from times</small>
 </div>
-<div className={styles.formGroup}>
-<label>Run Days</label>
-<select
-name="runDays"
-value={schedule.runDays}
-onChange={handleChange}
-required
-style={{
-  backgroundColor: schedule.runDays === 'Everyday' && schedule.departureDate && schedule.arrivalDate
-    ? '#fef3c7'
-    : undefined
-}}
->
-<option value="Everyday">Everyday (Daily Service)</option>
-<option value="Weekdays">Weekdays (Mon-Fri)</option>
-<option value="Weekends">Weekends (Sat-Sun)</option>
-<option value="Specific Days">Specific Days (One-time/Special)</option>
-</select>
-{schedule.runDays === 'Everyday' && schedule.departureDate && schedule.arrivalDate && (
-  <small className={styles.helpText} style={{ color: '#d97706', fontWeight: '500' }}>
-    ⚠️ Warning: You have specific dates set but "Everyday" is selected. Consider changing to "Specific Days" for clarity.
-  </small>
-)}
-{schedule.runDays === 'Specific Days' && (!schedule.departureDate || !schedule.arrivalDate) && (
-  <small className={styles.helpText} style={{ color: '#d97706', fontWeight: '500' }}>
-    ⚠️ Warning: "Specific Days" selected but no departure/arrival dates set.
-  </small>
-)}
-</div>
 </div>
 </div>
 
 {/* Fare Options */}
 <div className={styles.section}>
 <h3>💰 Fare Options ({Array.isArray(schedule.fareOptions) ? schedule.fareOptions.length : 0} classes)</h3>
+{id && (
+  <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+    <div style={{ flex: 1, padding: '0.75rem', background: '#fef3c7', borderRadius: '6px', fontSize: '0.875rem', color: '#92400e' }}>
+      ℹ️ <strong>Note:</strong> Below shows base capacity. Customer site shows real-time availability from TravelInventory.
+    </div>
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          
+          // Load real-time availability for each fare class
+          const updatedFareOptions = await Promise.all(
+            schedule.fareOptions.map(async (fare) => {
+              try {
+                const response = await post(`/api/admin/debug/inventory`, {
+                  trainAvailabilityId: id,
+                  travelDate: schedule.departureDate,
+                  classInfo: fare.class
+                });
+                if (response.success && response.data.inventory) {
+                  return {
+                    ...fare,
+                    realTimeAvailable: response.data.inventory.availableSeats,
+                    inventoryData: response.data.inventory
+                  };
+                }
+                return fare;
+              } catch (error) {
+                console.error(`Failed to load inventory for class ${fare.class}:`, error);
+                return fare;
+              }
+            })
+          );
+          
+          setSchedule(prev => ({ ...prev, fareOptions: updatedFareOptions }));
+          setSuccess('Real-time availability loaded for all classes!');
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (error) {
+          console.error('Failed to load real-time availability:', error);
+          setError('Failed to load real-time availability');
+        } finally {
+          setLoading(false);
+        }
+      }}
+      className={styles.refreshButton}
+      disabled={loading || !schedule.departureDate}
+      style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem' }}
+    >
+      🔄 Load Real-time Availability
+    </button>
+  </div>
+)}
  
 
 <div className={styles.fareOptionsTable}>
@@ -560,7 +745,7 @@ style={{
 <th>Class</th>
 <th>Price</th>
 <th>Total Seats</th>
-<th>Available</th>
+<th>Available (Base/Real-time)</th>
 <th>Waiting List</th>
 <th>Color</th>
 <th>Action</th>
@@ -573,7 +758,23 @@ schedule.fareOptions.map((option, index) => (
 <td>{option.class}</td>
 <td>{option.price}</td>
 <td>{option.totalSeats}</td>
-<td>{option.availableSeats}</td>
+<td>
+  <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <span style={{ fontWeight: 'bold' }}>{option.availableSeats}</span>
+    {option.realTimeAvailable !== undefined ? (
+      <small style={{ color: option.realTimeAvailable !== option.availableSeats ? '#f59e0b' : '#10b981', fontSize: '11px' }}>
+        Real-time: {option.realTimeAvailable}
+        {option.realTimeAvailable !== option.availableSeats && (
+          <span style={{ color: '#ef4444', marginLeft: '4px' }}>⚠️ Mismatch</span>
+        )}
+      </small>
+    ) : (
+      <small style={{ color: '#9ca3af', fontSize: '11px' }}>
+        Base capacity only
+      </small>
+    )}
+  </div>
+</td>
 <td>{option.waitingList}</td>
 <td>
 <span
@@ -583,13 +784,35 @@ title={option.color}
 />
 </td>
 <td>
-<button
-type="button"
-onClick={() => handleFareOptionRemove(index)}
-className={styles.removeButton}
->
-Remove
-</button>
+<div style={{ display: 'flex', gap: '8px' }}>
+  <button
+    type="button"
+    onClick={() => handleFareOptionEdit(index)}
+    className={styles.editButton}
+    title="Edit fare option"
+  >
+    ✏️ Edit
+  </button>
+  {option.realTimeAvailable !== undefined && option.realTimeAvailable !== option.availableSeats && (
+    <button
+      type="button"
+      onClick={() => handleSyncAvailability(index)}
+      className={styles.editButton}
+      title="Sync base capacity with real-time availability"
+      style={{ background: '#f59e0b' }}
+    >
+      🔄 Sync
+    </button>
+  )}
+  <button
+    type="button"
+    onClick={() => handleFareOptionRemove(index)}
+    className={styles.removeButton}
+    title="Remove fare option"
+  >
+    🗑️ Remove
+  </button>
+</div>
 </td>
 </tr>
 ))
@@ -616,7 +839,7 @@ type="text"
 name="price"
 value={newFareOption.price}
 onChange={handleFareOptionChange}
-placeholder="Rs.1500"
+placeholder="NPR 1500"
 />
 </td>
 <td>
@@ -694,6 +917,109 @@ Cancel
 )}
 </div>
 </form>
+
+{/* Fare Option Edit Modal */}
+{showFareModal && editingFareOption && (
+  <div className={styles.modalOverlay} onClick={() => setShowFareModal(false)}>
+    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.modalHeader}>
+        <h3>✏️ Edit Fare Option</h3>
+        <button 
+          className={styles.closeButton} 
+          onClick={() => setShowFareModal(false)}
+        >
+          ✕
+        </button>
+      </div>
+      
+      <div className={styles.modalBody}>
+        <div className={styles.formGroup}>
+          <label>Class</label>
+          <input
+            type="text"
+            value={editingFareOption.class}
+            onChange={(e) => setEditingFareOption({ ...editingFareOption, class: e.target.value })}
+            placeholder="3A, 2A, SL"
+            className={styles.input}
+          />
+        </div>
+        
+        <div className={styles.formGroup}>
+          <label>Price (NPR)</label>
+          <input
+            type="text"
+            value={editingFareOption.price}
+            onChange={(e) => setEditingFareOption({ ...editingFareOption, price: e.target.value })}
+            placeholder="NPR 1500"
+            className={styles.input}
+          />
+        </div>
+        
+        <div className={styles.formGroup}>
+          <label>Total Seats</label>
+          <input
+            type="number"
+            value={editingFareOption.totalSeats}
+            onChange={(e) => setEditingFareOption({ ...editingFareOption, totalSeats: parseInt(e.target.value) })}
+            placeholder="72"
+            min="1"
+            className={styles.input}
+          />
+        </div>
+        
+        <div className={styles.formGroup}>
+          <label>Available Seats</label>
+          <input
+            type="number"
+            value={editingFareOption.availableSeats}
+            onChange={(e) => setEditingFareOption({ ...editingFareOption, availableSeats: parseInt(e.target.value) })}
+            placeholder="45"
+            min="0"
+            className={styles.input}
+          />
+        </div>
+        
+        <div className={styles.formGroup}>
+          <label>Waiting List Capacity</label>
+          <input
+            type="number"
+            value={editingFareOption.waitingList}
+            onChange={(e) => setEditingFareOption({ ...editingFareOption, waitingList: parseInt(e.target.value) })}
+            placeholder="0"
+            min="0"
+            className={styles.input}
+          />
+        </div>
+        
+        <div className={styles.formGroup}>
+          <label>Color</label>
+          <input
+            type="color"
+            value={editingFareOption.color}
+            onChange={(e) => setEditingFareOption({ ...editingFareOption, color: e.target.value })}
+            className={styles.colorInput}
+          />
+        </div>
+      </div>
+      
+      <div className={styles.modalFooter}>
+        <button 
+          className={styles.cancelButton}
+          onClick={() => setShowFareModal(false)}
+        >
+          Cancel
+        </button>
+        <button 
+          className={styles.saveButton}
+          onClick={handleFareOptionSave}
+          disabled={loading}
+        >
+          {loading ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 </div>
 );
 };

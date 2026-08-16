@@ -135,7 +135,7 @@ required
 </div>
 
 <div className={styles.formGroup}>
-<label>Price (Rs.) <span className={styles.required}>*</span></label>
+<label>Price (NPR) <span className={styles.required}>*</span></label>
 <input
 type="text" // Changed from "number" to "text" for better control
 name="price"

@@ -19,6 +19,12 @@ const {
   createTrainAvailability,
   updateTrainAvailability,
   deleteTrainAvailability,
+  getTrainAvailability,
+  addFareOption,
+  updateFareOption,
+  removeFareOption,
+  checkInventory,
+  resetInventory,
 } = require('../controllers/admin');
 
 const { protect, authorize } = require('../middleware/auth');
@@ -37,8 +43,14 @@ router.delete('/trains/:id', deleteTrain);
 
 // Train availability management with Round Robin algorithm
 router.post('/train-availability', createTrainAvailability);
+router.get('/train-availability/:id', getTrainAvailability);
 router.put('/train-availability/:id', updateTrainAvailability);
 router.delete('/train-availability/:id', deleteTrainAvailability);
+
+// Fare options management
+router.post('/train-availability/:id/fare-options', addFareOption);
+router.put('/train-availability/:id/fare-options/:class', updateFareOption);
+router.delete('/train-availability/:id/fare-options', removeFareOption);
 
 // Meal management
 router.get('/meals', getMeals);
@@ -57,5 +69,9 @@ router.delete('/coupons/:id', deleteCoupon);
 // Booking management
 router.get('/bookings', getBookings);
 router.get('/stats', getBookingStats);
+
+// Inventory debugging and management
+router.post('/debug/inventory', checkInventory);
+router.post('/debug/inventory/reset', resetInventory);
 
 module.exports = router;

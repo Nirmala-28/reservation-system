@@ -1,6 +1,6 @@
 // Currency Configuration for Nepal Train Reservation System - Admin Dashboard
 export const CURRENCY_CONFIG = {
-  symbol: 'Rs.',          // Nepalese Rupee symbol (more compatible than रू)
+  symbol: 'NPR ',         // Nepalese Rupee (NPR) - explicit for Nepal
   code: 'NPR',           // ISO currency code
   name: 'Nepalese Rupee', // Currency name
   taxName: 'VAT',        // Value Added Tax (Nepal)

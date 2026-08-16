@@ -98,12 +98,12 @@ const CouponList = () => {
                 <td>
                   {coupon.discountType === 'percentage' 
                     ? `${coupon.discountValue}%` 
-                    : `Rs.${coupon.discountValue}`}
+                    : `NPR ${coupon.discountValue}`}
                   {coupon.maxDiscount && coupon.discountType === 'percentage' && (
-                    <span className={styles.maxDiscount}>(max Rs.{coupon.maxDiscount})</span>
+                    <span className={styles.maxDiscount}>(max NPR {coupon.maxDiscount})</span>
                   )}
                 </td>
-                <td>Rs.{coupon.minOrderValue}</td>
+                <td>NPR {coupon.minOrderValue}</td>
                 <td>{formatDate(coupon.validTo)}</td>
                 <td>
                   <span 

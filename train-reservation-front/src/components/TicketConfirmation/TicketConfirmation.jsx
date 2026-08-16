@@ -6,7 +6,7 @@ import {
   FaCheckCircle, FaPrint, FaFileDownload, FaTrain, 
   FaUser, FaQrcode, FaSpinner, 
   FaExclamationTriangle, FaArrowLeft, FaClock,
-  FaCalendarAlt, FaRoute
+  FaCalendarAlt, FaRoute, FaMoneyBillWave
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./TicketConfirmation.module.css";
@@ -399,7 +399,7 @@ const TicketConfirmation = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
             >
-              <h3><FaRupeeSign className={styles.icon} /> Payment Summary</h3>
+              <h3><FaMoneyBillWave className={styles.icon} /> Payment Summary</h3>
               <div className={styles.fareBreakdown}>
                 {fareBreakdown ? (
                   <>
@@ -465,10 +465,11 @@ const TicketConfirmation = () => {
               {qrCode ? (
                 <motion.img 
                   src={qrCode} 
-                  alt="QR Code" 
+                  alt="Ticket QR Code" 
                   className={styles.qrImage}
                   initial={{ rotate: -5 }}
                   animate={{ rotate: 0 }}
+                  title="Contains booking PNR and train details"
                 />
               ) : (
                 <div className={styles.qrPlaceholder}>
@@ -476,7 +477,8 @@ const TicketConfirmation = () => {
                   <p>QR code will be generated</p>
                 </div>
               )}
-              <p>Scan to view ticket on any device</p>
+              <p>Scan for ticket verification</p>
+              <p className={styles.scanHint}>Contains: PNR, Train #, Date, Class</p>
               <p className={styles.scanHint}>Works with any QR scanner app</p>
             </motion.div>
           </motion.div>

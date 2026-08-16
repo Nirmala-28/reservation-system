@@ -112,6 +112,36 @@ const BookingList = () => {
     return CURRENCY_CONFIG.symbol + numAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
+  const getAlgorithmColor = (algorithm) => {
+    const colors = {
+      'SegmentTree': '#e0f2fe',
+      'RoundRobin': '#fef3c7',
+      'PriorityQueue': '#fce7f3',
+      'Dijkstra': '#dcfce7'
+    };
+    return colors[algorithm] || '#f3f4f6';
+  };
+
+  const getAlgorithmTextColor = (algorithm) => {
+    const colors = {
+      'SegmentTree': '#0369a1',
+      'RoundRobin': '#d97706',
+      'PriorityQueue': '#be185d',
+      'Dijkstra': '#15803d'
+    };
+    return colors[algorithm] || '#374151';
+  };
+
+  const getAlgorithmLabel = (algorithm) => {
+    const labels = {
+      'SegmentTree': 'Segment Tree',
+      'RoundRobin': 'Round Robin',
+      'PriorityQueue': 'Priority Queue',
+      'Dijkstra': 'Dijkstra'
+    };
+    return labels[algorithm] || algorithm;
+  };
+
   const exportToCSV = () => {
     const headers = [
       'PNR', 'Train Number', 'Train Name', 'User Name', 'User Email',
@@ -449,60 +479,26 @@ const BookingList = () => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {(booking.segmentInfo || booking.algorithmLog?.some(l => l.algorithm === 'SegmentTree')) && (
-                        <span style={{ 
-                          fontSize: '0.7rem', 
-                          background: '#e0f2fe', 
-                          color: '#0369a1',
-                          padding: '2px 6px',
-                          borderRadius: '10px',
-                          fontWeight: '600',
-                          display: 'inline-block',
-                          width: 'fit-content'
-                        }}>
-                          Segment Tree
-                        </span>
-                      )}
-                      {(booking.roundRobinData || booking.algorithmLog?.some(l => l.algorithm === 'RoundRobin')) && (
-                        <span style={{ 
-                          fontSize: '0.7rem', 
-                          background: '#fef3c7', 
-                          color: '#d97706',
-                          padding: '2px 6px',
-                          borderRadius: '10px',
-                          fontWeight: '600',
-                          display: 'inline-block',
-                          width: 'fit-content'
-                        }}>
-                          Round Robin
-                        </span>
-                      )}
-                      {(booking.status?.toLowerCase() === 'waiting' || booking.algorithmLog?.some(l => l.algorithm === 'PriorityQueue')) && (
-                        <span style={{ 
-                          fontSize: '0.7rem', 
-                          background: '#fce7f3', 
-                          color: '#be185d',
-                          padding: '2px 6px',
-                          borderRadius: '10px',
-                          fontWeight: '600',
-                          display: 'inline-block',
-                          width: 'fit-content'
-                        }}>
-                          Priority Queue
-                        </span>
-                      )}
-                      {booking.algorithmLog?.some(l => l.algorithm === 'Dijkstra') && (
-                        <span style={{ 
-                          fontSize: '0.7rem', 
-                          background: '#dcfce7', 
-                          color: '#15803d',
-                          padding: '2px 6px',
-                          borderRadius: '10px',
-                          fontWeight: '600',
-                          display: 'inline-block',
-                          width: 'fit-content'
-                        }}>
-                          Dijkstra
+                      {booking.algorithmLog && booking.algorithmLog.length > 0 ? (
+                        booking.algorithmLog.map((log, idx) => (
+                          <div key={idx} style={{ 
+                            fontSize: '0.7rem', 
+                            background: getAlgorithmColor(log.algorithm),
+                            color: getAlgorithmTextColor(log.algorithm),
+                            padding: '2px 6px',
+                            borderRadius: '10px',
+                            fontWeight: '600',
+                            display: 'inline-block',
+                            width: 'fit-content',
+                            cursor: 'pointer',
+                            title: `${log.algorithm}: ${log.action} - ${log.result}`
+                          }}>
+                            {getAlgorithmLabel(log.algorithm)}
+                          </div>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                          No algorithm data
                         </span>
                       )}
                     </div>
