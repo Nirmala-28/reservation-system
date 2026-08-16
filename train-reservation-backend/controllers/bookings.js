@@ -576,9 +576,24 @@ exports.getBooking = async (req, res) => {
       });
     }
 
+    // Generate QR code for this booking
+    const generateQRCode = require('../utils/generateQRCode');
+    const qrData = {
+      pnr: booking.pnr,
+      trainNumber: booking.trainAvailability.trainNumber,
+      trainName: booking.trainAvailability.trainName,
+      date: booking.travelDate,
+      passenger: booking.passengers[0]?.name || 'Passenger',
+      class: booking.classInfo
+    };
+    const qrCode = await generateQRCode(qrData);
+
     res.status(200).json({
       success: true,
-      data: booking,
+      data: {
+        ...booking.toObject(),
+        qrCode
+      },
     });
   } catch (error) {
     res.status(400).json({
