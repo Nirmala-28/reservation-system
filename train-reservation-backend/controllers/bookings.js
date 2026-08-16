@@ -68,7 +68,8 @@ exports.createBooking = async (req, res) => {
     // while TravelInventory records the remaining seats for each travel date.
     const travelDateRange = dateRange(travelDate);
     const inventory = await getOrCreateInventory(trainAvailability, selectedClass, travelDate);
-    let isWaitlistBooking = inventory.availableSeats < passengers.length;
+    // Use frontend's waitlist flag if provided, otherwise determine from inventory
+    let isWaitlistBooking = req.body.isWaitlist || inventory.availableSeats < passengers.length;
 
     // -----------------------------------------------------------------
     // ALGORITHM 1: SEGMENT TREE — Partial-Route Seat Availability Check

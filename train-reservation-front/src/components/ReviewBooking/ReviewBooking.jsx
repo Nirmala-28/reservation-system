@@ -483,7 +483,8 @@ const ReviewBooking = () => {
         total: parseFloat(fareBreakdown.totalAmount)
       },
       ...(couponDiscount && { couponCode: couponCode }),
-      mealSelections: mealSelections
+      mealSelections: mealSelections,
+      isWaitlist: location.state.isWaitlist || false // Pass waitlist flag to backend
     };
   
     try {
@@ -497,26 +498,43 @@ const ReviewBooking = () => {
       });
   
       const data = await response.json();
-  
+
       if (data.success) {
-        // Directly navigate to payment page without showing alert
-        navigate('/payment', { 
-          state: { 
-            bookingId: data.booking,
-            amount: data.totalAmount,
-            pnr: data.pnr,
-            paymentMethod: selectedPaymentMethod,
-            selectedTrain: location.state.selectedTrain,
-            selectedFare: location.state.selectedFare,
-            travelers: travelers,
-            fareBreakdown: fareBreakdown,
-            couponCode: couponDiscount ? couponCode : null,
-            couponDiscount: couponDiscount ? couponDiscount.amount : 0,
-            roundRobinAllocation: data.roundRobinAllocation,
-            isWaitlist: Boolean(data.waitlistPosition),
-            waitlistPosition: data.waitlistPosition || null
-          } 
-        });
+        // If this is a waitlist booking, skip payment and go directly to confirmation
+        if (location.state.isWaitlist || data.waitlistPosition) {
+          navigate('/ticket-confirmation', {
+            state: {
+              bookingId: data.booking,
+              pnr: data.pnr,
+              selectedTrain: location.state.selectedTrain,
+              selectedFare: location.state.selectedFare,
+              travelers: travelers,
+              fareBreakdown: fareBreakdown,
+              isWaitlist: true,
+              waitlistPosition: data.waitlistPosition || null,
+              paymentStatus: 'not_required'
+            },
+            replace: true
+          });
+        } else {
+          // Normal booking - proceed to payment
+          navigate('/payment', {
+            state: {
+              bookingId: data.booking,
+              amount: data.totalAmount,
+              pnr: data.pnr,
+              paymentMethod: selectedPaymentMethod,
+              selectedTrain: location.state.selectedTrain,
+              selectedFare: location.state.selectedFare,
+              travelers: travelers,
+              fareBreakdown: fareBreakdown,
+              couponCode: couponDiscount ? couponCode : null,
+              couponDiscount: couponDiscount ? couponDiscount.amount : 0,
+              roundRobinAllocation: data.roundRobinAllocation,
+              isWaitlist: false
+            }
+          });
+        }
       } else {
         alert(data.message || "Booking failed");
       }

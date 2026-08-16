@@ -110,35 +110,40 @@ const TrainSearch = () => {
   }, [fromStationCode, toStationCode, searchParams.departureDate, searchParams.fromStation, searchParams.toStation]);
 
   const handleBookNow = (train, fareOption = null) => {
-    const selectedFareOption = fareOption || 
-      selectedFare?.[train._id || train.trainNumber] || 
+    const selectedFareOption = fareOption ||
+      selectedFare?.[train._id || train.trainNumber] ||
       (train.fareOptions && train.fareOptions[0]);
-    
+
     if (!selectedFareOption) {
       alert("Please select a fare class before booking");
       return;
     }
-    
+
     if (!isAuthenticated) {
-      navigate('/login', { 
-        state: { 
+      navigate('/login', {
+        state: {
           from: '/trainview',
           searchParams: searchParams,
           selectedTrain: train,
           selectedFare: selectedFareOption
-        } 
+        }
       });
       return;
     }
-    
-    navigate('/reviewbooking', { 
-      state: { 
+
+    // Check if this is a waitlist booking (train is full)
+    const isTrainFull = train.fareOptions && train.fareOptions.length > 0 &&
+      train.fareOptions.every(f => f.availableSeats === 0 || f.availableSeats === undefined);
+
+    navigate('/reviewbooking', {
+      state: {
         selectedTrain: train,
         selectedFare: selectedFareOption,
         departureDate: searchParams.departureDate,
         fromStation: searchParams.fromStation,
-        toStation: searchParams.toStation
-      } 
+        toStation: searchParams.toStation,
+        isWaitlist: isTrainFull
+      }
     });
   };
   
@@ -448,7 +453,8 @@ const TrainSearch = () => {
                 const isTrainFull = train.fareOptions && train.fareOptions.length > 0 &&
                   train.fareOptions.every(f => f.availableSeats === 0 || f.availableSeats === undefined);
                 const hasWaitlistCapacity = train.fareOptions?.some(
-                  f => Number(f.waitingList || f.totalSeats || 0) > 0
+                  f => Number(f.waitingList || f.totalSeats || 0) > 0 && 
+                    (f.waitingListActual || 0) < (f.waitingList || f.totalSeats || 0)
                 );
                 return (
                   <>
@@ -549,8 +555,8 @@ const TrainSearch = () => {
                         <div className={styles.availability}>
                           Available: {fare.availableSeats}/{fare.totalSeats}
                         </div>
-                        {fare.waitingList > 0 && (
-                          <div className={styles.waitingList}>WL: {fare.waitingList}</div>
+                        {fare.waitingListActual > 0 && (
+                          <div className={styles.waitingList}>WL: {fare.waitingListActual}</div>
                         )}
                       </motion.div>
                     ))}

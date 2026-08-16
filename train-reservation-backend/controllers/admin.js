@@ -289,6 +289,23 @@ exports.checkInventory = async (req, res) => {
       travelDate: { $gte: new Date(`${key}T00:00:00.000Z`), $lt: new Date(`${key}T23:59:59.999Z`) }
     });
 
+    // Get waitlist count for this class and date
+    const waitlistStats = await Booking.aggregate([
+      {
+        $match: {
+          trainAvailability: trainAvailabilityId,
+          classInfo: classInfo,
+          status: 'Waiting',
+          travelDate: { $gte: new Date(`${key}T00:00:00.000Z`), $lt: new Date(`${key}T23:59:59.999Z`) }
+        }
+      },
+      { $project: { passengerCount: { $size: '$passengers' } } },
+      { $group: { _id: null, passengers: { $sum: '$passengerCount' }, bookings: { $sum: 1 } } }
+    ]);
+
+    const actualWaitlist = waitlistStats[0]?.passengers || 0;
+    const maxWaitlist = fareOption.waitingList || fareOption.totalSeats || 0;
+
     res.status(200).json({
       success: true,
       data: {
@@ -304,7 +321,12 @@ exports.checkInventory = async (req, res) => {
         bookings: bookings,
         bookingCount: bookings.length,
         calculatedAvailable: fareOption.totalSeats - bookings.length,
-        inventoryAvailable: inventory?.availableSeats
+        inventoryAvailable: inventory?.availableSeats,
+        waitlist: {
+          actual: actualWaitlist,
+          max: maxWaitlist,
+          display: `${actualWaitlist}/${maxWaitlist}`
+        }
       }
     });
   } catch (error) {

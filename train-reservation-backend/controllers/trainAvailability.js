@@ -2,6 +2,7 @@
 const TrainAvailability = require('../models/TrainAvailability');
 const Train = require('../models/Train');
 const TravelInventory = require('../models/TravelInventory');
+const Booking = require('../models/Booking');
 const DijkstraSolver = require('../utils/dijkstra');
 const { dijkstraCache, trainAvailabilityCache } = require('../utils/cache');
 
@@ -119,21 +120,49 @@ exports.searchTrains = async (req, res) => {
     const inventoryByClass = new Map(
       inventories.map(item => [`${item.trainAvailability}:${item.classInfo}`, item.availableSeats])
     );
-    
+
     console.log(`[Search] Found ${inventories.length} inventory records for ${searchedDate}`);
     inventories.forEach(inv => {
       console.log(`  - Train: ${inv.trainAvailability}, Class: ${inv.classInfo}, Available: ${inv.availableSeats}`);
     });
-    
+
+    // Get actual waitlist counts for all trains
+    const trainIds = availabilities.map(train => train._id);
+    const waitlistStats = await Booking.aggregate([
+      {
+        $match: {
+          trainAvailability: { $in: trainIds },
+          status: 'Waiting',
+          travelDate: { $gte: new Date(`${searchedDate}T00:00:00.000Z`), $lt: new Date(`${searchedDate}T23:59:59.999Z`) }
+        }
+      },
+      {
+        $group: {
+          _id: { trainAvailability: '$trainAvailability', classInfo: '$classInfo' },
+          passengers: { $sum: { $size: '$passengers' } },
+          bookings: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const waitlistByClass = new Map();
+    waitlistStats.forEach(stat => {
+      const key = `${stat._id.trainAvailability}:${stat._id.classInfo}`;
+      waitlistByClass.set(key, stat.passengers);
+    });
+
     availabilities = availabilities.map(train => ({
       ...train,
       fareOptions: (train.fareOptions || []).map(fare => {
         const inventoryAvailable = inventoryByClass.get(`${train._id}:${fare.class}`);
         const finalAvailable = inventoryAvailable !== undefined ? inventoryAvailable : fare.availableSeats;
-        console.log(`[Search] Train ${train.trainNumber} Class ${fare.class}: FareOptions=${fare.availableSeats}, Inventory=${inventoryAvailable}, Final=${finalAvailable}`);
+        const actualWaitlist = waitlistByClass.get(`${train._id}:${fare.class}`) || 0;
+        console.log(`[Search] Train ${train.trainNumber} Class ${fare.class}: FareOptions=${fare.availableSeats}, Inventory=${inventoryAvailable}, Final=${finalAvailable}, WaitlistActual=${actualWaitlist}`);
         return {
           ...fare,
           availableSeats: finalAvailable,
+          waitingListActual: actualWaitlist, // Actual count
+          waitingList: fare.waitingList // Max capacity
         };
       }),
     }));

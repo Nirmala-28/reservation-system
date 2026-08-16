@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../config/api";
 import { CURRENCY_CONFIG, formatCurrency } from "../../config/currency";
-import { 
-  FaCheckCircle, FaPrint, FaFileDownload, FaTrain, 
-  FaUser, FaQrcode, FaSpinner, 
+import {
+  FaCheckCircle, FaPrint, FaFileDownload, FaTrain,
+  FaUser, FaQrcode, FaSpinner,
   FaExclamationTriangle, FaArrowLeft, FaClock,
   FaCalendarAlt, FaRoute, FaMoneyBillWave
 } from "react-icons/fa";
@@ -458,18 +458,18 @@ const TicketConfirmation = () => {
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            <motion.div 
+            <motion.div
               className={styles.qrContainer}
               whileHover={{ scale: 1.03 }}
             >
               {qrCode ? (
-                <motion.img 
-                  src={qrCode} 
-                  alt="Ticket QR Code" 
+                <motion.img
+                  src={qrCode}
+                  alt="Ticket QR Code"
                   className={styles.qrImage}
                   initial={{ rotate: -5 }}
                   animate={{ rotate: 0 }}
-                  title="Contains booking PNR and train details"
+                  title={status === 'Waiting' ? 'Waitlist booking QR code' : 'Contains booking PNR and train details'}
                 />
               ) : (
                 <div className={styles.qrPlaceholder}>
@@ -477,8 +477,8 @@ const TicketConfirmation = () => {
                   <p>QR code will be generated</p>
                 </div>
               )}
-              <p>Scan for ticket verification</p>
-              <p className={styles.scanHint}>Contains: PNR, Train #, Date, Class</p>
+              <p>{status === 'Waiting' ? 'Waitlist Position: ' + (waitlistPosition || location.state?.waitlistPosition || 'pending') : 'Scan for ticket verification'}</p>
+              <p className={styles.scanHint}>{status === 'Waiting' ? 'Scan to check waitlist status' : 'Contains: PNR, Train #, Date, Class'}</p>
               <p className={styles.scanHint}>Works with any QR scanner app</p>
             </motion.div>
           </motion.div>

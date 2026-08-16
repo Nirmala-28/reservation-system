@@ -133,9 +133,9 @@ const TrainDetailsModal = ({ train, onClose, departureDate }) => {
                           of {fare.totalSeats || 'N/A'} seats
                         </span>
                       </div>
-                      {fare.waitingList > 0 && (
+                      {fare.waitingListActual > 0 && (
                         <div className={styles.waitingList}>
-                          WL: {fare.waitingList}
+                          Waiting List: {fare.waitingListActual}
                         </div>
                       )}
                       <div className={`${styles.statusIndicator} ${

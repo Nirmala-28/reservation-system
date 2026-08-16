@@ -58,6 +58,41 @@ const fetchExistingData = async () => {
           fareOptions: Array.isArray(data.fareOptions) ? data.fareOptions : []
         });
         console.log('[ScheduleForm] Data loaded successfully');
+
+        // Automatically load real-time availability if departure date is set
+        if (data.departureDate && Array.isArray(data.fareOptions) && data.fareOptions.length > 0) {
+          console.log('[ScheduleForm] Auto-loading real-time availability...');
+          try {
+            const updatedFareOptions = await Promise.all(
+              data.fareOptions.map(async (fare) => {
+                try {
+                  const inventoryResponse = await post(`/api/admin/debug/inventory`, {
+                    trainAvailabilityId: id,
+                    travelDate: data.departureDate,
+                    classInfo: fare.class
+                  });
+                  if (inventoryResponse.success && inventoryResponse.data.inventory) {
+                    return {
+                      ...fare,
+                      realTimeAvailable: inventoryResponse.data.inventory.availableSeats,
+                      inventoryData: inventoryResponse.data.inventory,
+                      waitlistActual: inventoryResponse.data.waitlist?.actual || 0
+                    };
+                  }
+                  return fare;
+                } catch (error) {
+                  console.error(`Failed to load inventory for class ${fare.class}:`, error);
+                  return fare;
+                }
+              })
+            );
+            setSchedule(prev => ({ ...prev, fareOptions: updatedFareOptions }));
+            console.log('[ScheduleForm] Real-time availability auto-loaded');
+          } catch (error) {
+            console.error('[ScheduleForm] Failed to auto-load real-time availability:', error);
+            // Don't fail the whole load if real-time fails
+          }
+        }
       } else {
         console.error('[ScheduleForm] API returned false success');
         setError('Failed to load schedule data');
@@ -262,60 +297,6 @@ const handleFareOptionSave = async () => {
   } catch (error) {
     console.error('Error updating fare option:', error);
     setError('Failed to update fare option');
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleSyncAvailability = async (index) => {
-  try {
-    setLoading(true);
-    setError(null);
-    
-    const fare = schedule.fareOptions[index];
-    if (fare.realTimeAvailable === undefined) {
-      setError('Please load real-time availability first');
-      return;
-    }
-    
-    // Update the fare option with real-time availability (only send relevant fields)
-    const updatedFare = {
-      class: fare.class,
-      price: fare.price,
-      totalSeats: fare.totalSeats,
-      availableSeats: fare.realTimeAvailable,
-      waitingList: fare.waitingList,
-      color: fare.color
-    };
-    
-    const response = await put(`/api/admin/train-availability/${id}/fare-options/${fare.class}`, {
-      class: fare.class,
-      fareOption: updatedFare
-    });
-    
-    if (response.success) {
-      // Update local state with the synced data
-      const syncedFare = {
-        ...fare,
-        availableSeats: fare.realTimeAvailable,
-        realTimeAvailable: fare.realTimeAvailable // Keep this for UI display
-      };
-      
-      setSchedule(prev => ({
-        ...prev,
-        fareOptions: Array.isArray(prev.fareOptions) 
-          ? prev.fareOptions.map((f, i) => i === index ? syncedFare : f)
-          : []
-      }));
-      
-      setSuccess(`Synced ${fare.class} availability: ${fare.availableSeats} → ${fare.realTimeAvailable}`);
-      setTimeout(() => setSuccess(null), 3000);
-    } else {
-      setError(response.message || 'Failed to sync availability');
-    }
-  } catch (error) {
-    console.error('Error syncing availability:', error);
-    setError('Failed to sync availability');
   } finally {
     setLoading(false);
   }
@@ -685,7 +666,7 @@ readOnly
 {id && (
   <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
     <div style={{ flex: 1, padding: '0.75rem', background: '#fef3c7', borderRadius: '6px', fontSize: '0.875rem', color: '#92400e' }}>
-      ℹ️ <strong>Note:</strong> Below shows base capacity. Customer site shows real-time availability from TravelInventory.
+      ℹ️ <strong>Note:</strong> Real-time availability is auto-loaded. Use refresh to update.
     </div>
     <button
       type="button"
@@ -693,7 +674,7 @@ readOnly
         try {
           setLoading(true);
           setError(null);
-          
+
           // Load real-time availability for each fare class
           const updatedFareOptions = await Promise.all(
             schedule.fareOptions.map(async (fare) => {
@@ -704,10 +685,33 @@ readOnly
                   classInfo: fare.class
                 });
                 if (response.success && response.data.inventory) {
+                  // Auto-sync: Update base config to match real-time availability
+                  const syncResponse = await put(`/api/admin/train-availability/${id}/fare-options/${fare.class}`, {
+                    class: fare.class,
+                    fareOption: {
+                      class: fare.class,
+                      price: fare.price,
+                      totalSeats: fare.totalSeats,
+                      availableSeats: response.data.inventory.availableSeats,
+                      waitingList: fare.waitingList,
+                      color: fare.color
+                    }
+                  });
+
+                  if (syncResponse.success) {
+                    return {
+                      ...fare,
+                      availableSeats: response.data.inventory.availableSeats,
+                      realTimeAvailable: response.data.inventory.availableSeats,
+                      inventoryData: response.data.inventory,
+                      waitlistActual: response.data.waitlist?.actual || 0
+                    };
+                  }
                   return {
                     ...fare,
                     realTimeAvailable: response.data.inventory.availableSeats,
-                    inventoryData: response.data.inventory
+                    inventoryData: response.data.inventory,
+                    waitlistActual: response.data.waitlist?.actual || 0
                   };
                 }
                 return fare;
@@ -717,13 +721,13 @@ readOnly
               }
             })
           );
-          
+
           setSchedule(prev => ({ ...prev, fareOptions: updatedFareOptions }));
-          setSuccess('Real-time availability loaded for all classes!');
+          setSuccess('Real-time data refreshed and synced to base config!');
           setTimeout(() => setSuccess(null), 3000);
         } catch (error) {
-          console.error('Failed to load real-time availability:', error);
-          setError('Failed to load real-time availability');
+          console.error('Failed to refresh real-time availability:', error);
+          setError('Failed to refresh real-time availability');
         } finally {
           setLoading(false);
         }
@@ -732,7 +736,7 @@ readOnly
       disabled={loading || !schedule.departureDate}
       style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem' }}
     >
-      🔄 Load Real-time Availability
+      🔄 Refresh & Sync Real-time Data
     </button>
   </div>
 )}
@@ -746,7 +750,7 @@ readOnly
 <th>Price</th>
 <th>Total Seats</th>
 <th>Available (Base/Real-time)</th>
-<th>Waiting List</th>
+<th>Waiting List (Actual/Max)</th>
 <th>Color</th>
 <th>Action</th>
 </tr>
@@ -760,7 +764,7 @@ schedule.fareOptions.map((option, index) => (
 <td>{option.totalSeats}</td>
 <td>
   <div style={{ display: 'flex', flexDirection: 'column' }}>
-    <span style={{ fontWeight: 'bold' }}>{option.availableSeats}</span>
+    <span>{option.availableSeats}</span>
     {option.realTimeAvailable !== undefined ? (
       <small style={{ color: option.realTimeAvailable !== option.availableSeats ? '#f59e0b' : '#10b981', fontSize: '11px' }}>
         Real-time: {option.realTimeAvailable}
@@ -775,7 +779,18 @@ schedule.fareOptions.map((option, index) => (
     )}
   </div>
 </td>
-<td>{option.waitingList}</td>
+<td>
+  <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <span>
+      {option.waitlistActual !== undefined ? `${option.waitlistActual}/${option.waitingList}` : option.waitingList}
+    </span>
+    {option.waitlistActual !== undefined && (
+      <small style={{ color: option.waitlistActual >= option.waitingList ? '#ef4444' : '#10b981', fontSize: '11px' }}>
+        {option.waitlistActual >= option.waitingList ? 'Full' : 'Available'}
+      </small>
+    )}
+  </div>
+</td>
 <td>
 <span
 className={styles.colorPreview}
@@ -793,17 +808,6 @@ title={option.color}
   >
     ✏️ Edit
   </button>
-  {option.realTimeAvailable !== undefined && option.realTimeAvailable !== option.availableSeats && (
-    <button
-      type="button"
-      onClick={() => handleSyncAvailability(index)}
-      className={styles.editButton}
-      title="Sync base capacity with real-time availability"
-      style={{ background: '#f59e0b' }}
-    >
-      🔄 Sync
-    </button>
-  )}
   <button
     type="button"
     onClick={() => handleFareOptionRemove(index)}
@@ -868,8 +872,9 @@ type="number"
 name="waitingList"
 value={newFareOption.waitingList}
 onChange={handleFareOptionChange}
-placeholder="0"
+placeholder="Max (e.g., 10)"
 min="0"
+title="Maximum waitlist capacity"
 />
 </td>
 <td>
@@ -980,7 +985,7 @@ Cancel
         </div>
         
         <div className={styles.formGroup}>
-          <label>Waiting List Capacity</label>
+          <label>Waiting List (Max Capacity)</label>
           <input
             type="number"
             value={editingFareOption.waitingList}
@@ -989,6 +994,7 @@ Cancel
             min="0"
             className={styles.input}
           />
+          <small style={{ color: '#6b7280', fontSize: '12px' }}>Maximum number of people allowed on waitlist</small>
         </div>
         
         <div className={styles.formGroup}>
