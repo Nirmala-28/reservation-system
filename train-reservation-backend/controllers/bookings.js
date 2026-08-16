@@ -259,7 +259,7 @@ exports.createBooking = async (req, res) => {
         { $group: { _id: null, passengers: { $sum: '$passengerCount' }, bookings: { $sum: 1 } } },
       ]);
       const waitingPassengers = waitlistStats[0]?.passengers || 0;
-      const maxWaitlist = Number(selectedClass.waitingList || 0);
+      const maxWaitlist = Number(selectedClass.waitingList || selectedClass.totalSeats || 0);
       if (waitingPassengers + passengers.length > maxWaitlist) {
         return res.status(400).json({
           success: false,

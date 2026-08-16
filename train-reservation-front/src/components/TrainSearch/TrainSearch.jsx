@@ -446,7 +446,9 @@ const TrainSearch = () => {
               {(() => {
                 const isTrainFull = train.fareOptions && train.fareOptions.length > 0 &&
                   train.fareOptions.every(f => f.availableSeats === 0 || f.availableSeats === undefined);
-                const hasWaitlistCapacity = train.fareOptions?.some(f => Number(f.waitingList || 0) > 0);
+                const hasWaitlistCapacity = train.fareOptions?.some(
+                  f => Number(f.waitingList || f.totalSeats || 0) > 0
+                );
                 return (
                   <>
                   <div className={styles.trainHeader}>
