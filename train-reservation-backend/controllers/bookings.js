@@ -742,6 +742,12 @@ exports.cancelBooking = async (req, res) => {
 
     let promotedBooking = null;
     let priorityQueueResult = 'no waitlisted passengers';
+    // Declared here (not with `const` inside the block below) because it's
+    // read again further down, after the block closes — the previous
+    // block-scoped `const` threw "priorityQueueExecutionTime is not
+    // defined" on every cancellation that had any waitlisted passengers,
+    // regardless of whether a promotion actually happened.
+    let priorityQueueExecutionTime = 0;
 
     if (waitlistedBookings.length > 0) {
       const pq = new PriorityQueue();
@@ -768,16 +774,22 @@ exports.cancelBooking = async (req, res) => {
       const promotedReservation = promotedBooking && promotedClass
         ? await reserveSeats(availabilityToUpdate, promotedClass, promotedBooking.travelDate, promotedBooking.passengers.length)
         : null;
-      const priorityQueueExecutionTime = Date.now() - priorityQueueStartTime;
+      priorityQueueExecutionTime = Date.now() - priorityQueueStartTime;
 
       if (promotedBooking && promotedReservation) {
-        promotedBooking.status = 'Confirmed';
+        // A promoted booking is not paid for — waitlisted bookings never
+        // go through the payment step when created. Moving straight to
+        // 'Confirmed' here let a passenger end up with a fully confirmed,
+        // real ticket without ever paying. 'Pending' holds their seat
+        // (same as a fresh booking awaiting payment) and they're emailed
+        // to come pay for it; only updateBookingPayment can confirm it.
+        promotedBooking.status = 'Pending';
         promotedBooking.waitlistPosition = null;
         promotedBooking.algorithmLog = promotedBooking.algorithmLog || [];
         promotedBooking.algorithmLog.push({
           algorithm: 'PriorityQueue',
           action: 'promoted',
-          result: `Promoted from Waiting → Confirmed. Priority score: ${promotedBooking.priorityScore}. Queue had ${waitlistedBookings.length} passengers.`,
+          result: `Promoted from Waiting → Pending (awaiting payment). Priority score: ${promotedBooking.priorityScore}. Queue had ${waitlistedBookings.length} passengers.`,
           performanceMetrics: {
             executionTime: `${priorityQueueExecutionTime}ms`,
             heapSize: waitlistedBookings.length,
@@ -786,8 +798,25 @@ exports.cancelBooking = async (req, res) => {
         });
         await promotedBooking.save();
 
-        priorityQueueResult = `Promoted booking ${topBookingId} (priorityScore=${promotedBooking.priorityScore}, PNR=${promotedBooking.pnr}) from Waiting → Confirmed`;
+        priorityQueueResult = `Promoted booking ${topBookingId} (priorityScore=${promotedBooking.priorityScore}, PNR=${promotedBooking.pnr}) from Waiting → Pending (awaiting payment)`;
         console.log(`[Priority Queue] ${priorityQueueResult} (Execution: ${priorityQueueExecutionTime}ms)`);
+
+        try {
+          await sendEmail({
+            email: promotedBooking.contactInfo.email,
+            subject: `A seat opened up! Complete payment for PNR: ${promotedBooking.pnr}`,
+            message: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2>Good news — a seat is now available!</h2>
+                <p>You were waitlisted for PNR <strong>${promotedBooking.pnr}</strong>, and a seat has just opened up for you.</p>
+                <p>Your seat is being held, but your booking is <strong>not yet confirmed</strong> — please log in and complete payment to secure it.</p>
+              </div>
+            `
+          });
+          console.log('[Email] Promotion payment-required email sent to:', promotedBooking.contactInfo.email);
+        } catch (emailError) {
+          console.error('[Email] Failed to send promotion email:', emailError);
+        }
       }
     }
 

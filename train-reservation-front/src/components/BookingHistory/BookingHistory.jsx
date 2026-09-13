@@ -66,6 +66,54 @@ const BookingHistory = () => {
     navigate(`/ticket-confirmation`, { state: { bookingId } });
   };
 
+  // Reconstructs the state PaymentModal expects from a stored booking —
+  // used for bookings sitting in 'Pending' (either awaiting initial
+  // payment, or promoted from a waitlist and now awaiting payment).
+  const buildFareBreakdown = (booking) => {
+    const breakdown = booking.paymentDetails?.breakdown || [];
+    const findAmount = (labelPrefix) => {
+      const item = breakdown.find(b => b.label?.toLowerCase().startsWith(labelPrefix.toLowerCase()));
+      return item ? parseFloat(String(item.amount).replace(/[^0-9.-]/g, '')) || 0 : 0;
+    };
+    return {
+      baseFare: findAmount('Base Fare'),
+      reservationCharges: findAmount('Reservation'),
+      superfastCharges: findAmount('Superfast'),
+      vatAmount: findAmount('VAT'),
+      mealsPrice: findAmount('Meals'),
+      discountAmount: booking.paymentDetails?.discount?.discountAmount || 0,
+      totalAmount: booking.paymentDetails?.total
+    };
+  };
+
+  const handleCompletePayment = (booking) => {
+    const trainDetails = getTrainDetails(booking);
+    const availability = booking.trainAvailability || {};
+    navigate('/payment', {
+      state: {
+        bookingId: booking._id,
+        amount: booking.paymentDetails?.total,
+        pnr: booking.pnr,
+        paymentMethod: booking.paymentDetails?.paymentMethod || 'paypal',
+        selectedTrain: {
+          trainNumber: trainDetails.trainNumber,
+          trainName: trainDetails.trainName,
+          departureTime: trainDetails.departureTime,
+          departureStation: trainDetails.departureStation,
+          departureDate: availability.departureDate,
+          arrivalTime: trainDetails.arrivalTime,
+          arrivalStation: trainDetails.arrivalStation,
+          arrivalDate: availability.arrivalDate,
+          duration: availability.duration
+        },
+        selectedFare: { class: booking.classInfo },
+        travelers: booking.passengers || [],
+        fareBreakdown: buildFareBreakdown(booking),
+        isWaitlist: false
+      }
+    });
+  };
+
   const cancelBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
       return;
@@ -335,8 +383,17 @@ const BookingHistory = () => {
                     <FaInfoCircle /> View Details
                   </button>
                   
+                  {booking.status === 'Pending' && (
+                    <button
+                      className={`${styles.actionButton} ${styles.viewButton}`}
+                      onClick={() => handleCompletePayment(booking)}
+                    >
+                      <FaMoneyBillWave /> Complete Payment
+                    </button>
+                  )}
+
                   {booking.status !== 'Cancelled' && (
-                    <button 
+                    <button
                       className={`${styles.actionButton} ${styles.cancelButton}`}
                       onClick={() => cancelBooking(booking._id)}
                       disabled={cancellingId === booking._id}

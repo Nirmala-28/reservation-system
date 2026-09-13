@@ -480,20 +480,32 @@ const BookingList = () => {
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       {booking.algorithmLog && booking.algorithmLog.length > 0 ? (
-                        booking.algorithmLog.map((log, idx) => (
-                          <div key={idx} style={{ 
-                            fontSize: '0.7rem', 
-                            background: getAlgorithmColor(log.algorithm),
-                            color: getAlgorithmTextColor(log.algorithm),
-                            padding: '2px 6px',
-                            borderRadius: '10px',
-                            fontWeight: '600',
-                            display: 'inline-block',
-                            width: 'fit-content',
-                            cursor: 'pointer',
-                            title: `${log.algorithm}: ${log.action} - ${log.result}`
-                          }}>
-                            {getAlgorithmLabel(log.algorithm)}
+                        // A booking can log the same algorithm more than once
+                        // (e.g. Priority Queue for both "waitlisted" and later
+                        // "promoted"). Group by algorithm so each shows one
+                        // badge, with every event it logged in the tooltip.
+                        Object.values(
+                          booking.algorithmLog.reduce((groups, log) => {
+                            (groups[log.algorithm] = groups[log.algorithm] || []).push(log);
+                            return groups;
+                          }, {})
+                        ).map((logs, idx) => (
+                          <div
+                            key={idx}
+                            title={logs.map(log => `${log.algorithm}: ${log.action} - ${log.result}`).join('\n')}
+                            style={{
+                              fontSize: '0.7rem',
+                              background: getAlgorithmColor(logs[0].algorithm),
+                              color: getAlgorithmTextColor(logs[0].algorithm),
+                              padding: '2px 6px',
+                              borderRadius: '10px',
+                              fontWeight: '600',
+                              display: 'inline-block',
+                              width: 'fit-content',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {getAlgorithmLabel(logs[0].algorithm)}
                           </div>
                         ))
                       ) : (
