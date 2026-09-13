@@ -305,9 +305,13 @@ const BookingList = () => {
       }}>
         <span>Total: <strong>{bookings.length}</strong> | Filtered: <strong>{filteredBookings.length}</strong></span>
         <span>Revenue: <strong>{formatCurrency(
-          filteredBookings.reduce((sum, booking) => 
-            sum + (parseFloat(booking.paymentDetails?.total) || 0), 0
-          )
+          // Only 'Confirmed' bookings represent money actually collected —
+          // Cancelled bookings were refunded/never charged, and
+          // Pending/Waiting ones haven't paid yet, so summing every status
+          // (as this used to) overstated revenue by whatever was cancelled.
+          filteredBookings
+            .filter(booking => booking.status === 'Confirmed')
+            .reduce((sum, booking) => sum + (parseFloat(booking.paymentDetails?.total) || 0), 0)
         )}</strong></span>
       </div>
       

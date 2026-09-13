@@ -9,8 +9,14 @@ const StatsCard = ({ title, value, change }) => {
         <div className={`${styles.change} ${
           change > 0 ? styles.positive : change < 0 ? styles.negative : ''
         }`}>
-          {change > 0 ? '↑' : change < 0 ? '↓' : ''} 
-          {change !== 0 ? `${Math.abs(change)}%` : 'No change'}
+          {change === null ? (
+            'New this month'
+          ) : (
+            <>
+              {change > 0 ? '↑' : change < 0 ? '↓' : ''}{' '}
+              {change !== 0 ? `${Math.abs(change)}%` : 'No change'}
+            </>
+          )}
         </div>
       )}
     </div>

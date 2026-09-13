@@ -721,23 +721,86 @@ exports.getBookingStats = async (req, res) => {
       departureDate: { $gte: new Date().toISOString().split('T')[0] }
     });
 
-    // Simple time-based data (last 6 months)
-    const last6Months = [];
-    const revenueData = [];
-    const bookingData = [];
-    
+    // Real month-by-month data for the last 6 months (previously this was
+    // fabricated — current total divided by 6 with Math.random() noise
+    // added, so it changed on every page load and never reflected actual
+    // history). Build the 6 month buckets first, then aggregate real
+    // bookings into them by their actual createdAt date.
+    const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const monthBuckets = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date();
+      date.setDate(1); // avoid month rollover skew (e.g. Mar 31 - 1 month)
       date.setMonth(date.getMonth() - i);
-      const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      last6Months.push(monthName);
-      
-      const monthRevenue = Math.floor((totalRevenue[0]?.total || 0) / 6);
-      const monthBookings = Math.floor(totalBookings / 6);
-      
-      revenueData.push(monthRevenue + Math.random() * monthRevenue * 0.5);
-      bookingData.push(monthBookings + Math.floor(Math.random() * monthBookings * 0.5));
+      monthBuckets.push({
+        key: monthKey(date),
+        label: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      });
     }
+    const rangeStart = new Date(new Date().setDate(1));
+    rangeStart.setMonth(rangeStart.getMonth() - 5);
+    rangeStart.setHours(0, 0, 0, 0);
+
+    const monthlyRevenueRows = await Booking.aggregate([
+      { $match: { status: 'Confirmed', createdAt: { $gte: rangeStart } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          total: { $sum: '$paymentDetails.total' }
+        }
+      }
+    ]);
+    const monthlyBookingRows = await Booking.aggregate([
+      { $match: { createdAt: { $gte: rangeStart } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    const revenueByMonth = new Map(monthlyRevenueRows.map(r => [r._id, r.total]));
+    const bookingsByMonth = new Map(monthlyBookingRows.map(r => [r._id, r.count]));
+
+    const last6Months = monthBuckets.map(m => m.label);
+    const revenueData = monthBuckets.map(m => revenueByMonth.get(m.key) || 0);
+    const bookingData = monthBuckets.map(m => bookingsByMonth.get(m.key) || 0);
+
+    // Real month-over-month % change (current calendar month vs previous),
+    // replacing the previously hardcoded revenueChange/bookingsChange/
+    // mealsChange constants. null means "no data last month to compare
+    // against" — the frontend should show that as "New" rather than a
+    // misleading percentage.
+    const percentChange = (current, previous) => {
+      if (!previous) return current > 0 ? null : 0;
+      return Number((((current - previous) / previous) * 100).toFixed(1));
+    };
+    const currentMonthKey = monthBuckets[monthBuckets.length - 1].key;
+    const previousMonthKey = monthBuckets[monthBuckets.length - 2].key;
+    const revenueChange = percentChange(
+      revenueByMonth.get(currentMonthKey) || 0,
+      revenueByMonth.get(previousMonthKey) || 0
+    );
+    const bookingsChange = percentChange(
+      bookingsByMonth.get(currentMonthKey) || 0,
+      bookingsByMonth.get(previousMonthKey) || 0
+    );
+
+    const mealsByMonthRows = await Booking.aggregate([
+      { $match: { status: 'Confirmed', createdAt: { $gte: rangeStart } } },
+      { $unwind: { path: '$meals', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          total: { $sum: { $ifNull: ['$meals.quantity', 0] } }
+        }
+      }
+    ]);
+    const mealsByMonth = new Map(mealsByMonthRows.map(r => [r._id, r.total]));
+    const mealsChange = percentChange(
+      mealsByMonth.get(currentMonthKey) || 0,
+      mealsByMonth.get(previousMonthKey) || 0
+    );
 
     const statsData = {
       totals: {
@@ -749,9 +812,9 @@ exports.getBookingStats = async (req, res) => {
         mealsOrdered: mealsOrdered[0]?.total || 0,
         totalSchedules,
         activeSchedules,
-        revenueChange: 5.2,
-        bookingsChange: 12.1,
-        mealsChange: 8.7
+        revenueChange,
+        bookingsChange,
+        mealsChange
       },
       revenue: {
         labels: last6Months,
