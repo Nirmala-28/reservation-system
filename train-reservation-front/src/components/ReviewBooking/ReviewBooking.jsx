@@ -43,6 +43,7 @@ const ReviewBooking = () => {
   const [mealsLoading, setMealsLoading] = useState(false);
   const [mealsError, setMealsError] = useState(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(null);
   const [isCouponLoading, setIsCouponLoading] = useState(false);
@@ -399,12 +400,19 @@ const ReviewBooking = () => {
   };
 
   const handlePayment = async () => {
+    // Guards against duplicate bookings from a double-click or a slow
+    // network response leaving the button clickable while the first
+    // request is still in flight.
+    if (isSubmitting) {
+      return;
+    }
+
     // Disable Stripe payments
     if (selectedPaymentMethod === 'stripe') {
       alert('Credit/Debit Card payments are temporarily unavailable. Please select PayPal.');
       return;
     }
-  
+
     if (!validateForm()) {
       if (!selectedPaymentMethod) {
         alert("Please select a payment method");
@@ -487,6 +495,8 @@ const ReviewBooking = () => {
       isWaitlist: location.state.isWaitlist || false // Pass waitlist flag to backend
     };
   
+    setIsSubmitting(true);
+
     try {
       const response = await fetch(API_BASE_URL + '/api/bookings', {
         method: 'POST',
@@ -496,7 +506,7 @@ const ReviewBooking = () => {
         },
         body: JSON.stringify(bookingData)
       });
-  
+
       const data = await response.json();
 
       if (data.success) {
@@ -537,10 +547,12 @@ const ReviewBooking = () => {
         }
       } else {
         alert(data.message || "Booking failed");
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error("Booking error:", error);
       alert("Failed to create booking. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -963,12 +975,15 @@ const ReviewBooking = () => {
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className={styles.bookNowButton}
                 onClick={handlePayment}
-                disabled={!validateForm()}
+                disabled={!validateForm() || isSubmitting}
+                style={{ opacity: isSubmitting ? 0.7 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
               >
-                {selectedPaymentMethod ? 'Proceed to Payment' : 'Select Payment Method to Continue'}
+                {isSubmitting
+                  ? <><FaSpinner className={styles.spinner} /> Reserving your seats...</>
+                  : selectedPaymentMethod ? 'Proceed to Payment' : 'Select Payment Method to Continue'}
               </button>
             </div>
           </motion.div>

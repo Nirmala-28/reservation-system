@@ -64,6 +64,37 @@ exports.createBooking = async (req, res) => {
       });
     }
 
+    // Idempotency guard: a slow response or an impatient double-click on
+    // "Proceed to Payment" can fire this request twice before the first
+    // one navigates the user away. If we already created an unpaid booking
+    // for this exact user/train/class/date in the last minute, hand that
+    // one back instead of reserving a second set of seats for it.
+    const duplicateWindowStart = new Date(Date.now() - 60 * 1000);
+    const recentDuplicate = await Booking.findOne({
+      user: req.user._id,
+      trainAvailability: trainAvailability._id,
+      classInfo,
+      travelDate: new Date(travelDate),
+      status: { $in: ['Pending', 'Waiting'] },
+      'paymentDetails.transactionId': { $regex: '^PENDING_' },
+      createdAt: { $gte: duplicateWindowStart }
+    }).sort({ createdAt: -1 });
+
+    if (recentDuplicate) {
+      console.log('[Booking] Duplicate submission detected, returning existing booking:', recentDuplicate.pnr);
+      return res.status(201).json({
+        success: true,
+        booking: recentDuplicate._id,
+        totalAmount: recentDuplicate.paymentDetails.total.toFixed(2),
+        pnr: recentDuplicate.pnr,
+        waitlistPosition: recentDuplicate.waitlistPosition,
+        duplicate: true,
+        message: recentDuplicate.status === 'Waiting'
+          ? `Added to waitlist at position ${recentDuplicate.waitlistPosition}`
+          : 'Booking already reserved — resuming existing booking'
+      });
+    }
+
     // Availability is date-specific. A schedule's fare option is capacity,
     // while TravelInventory records the remaining seats for each travel date.
     const travelDateRange = dateRange(travelDate);
@@ -336,6 +367,33 @@ exports.createBooking = async (req, res) => {
       if (!isWaitlistBooking) {
         await releaseSeats(trainAvailability, classInfo, travelDate, passengers.length);
       }
+
+      // E11000 here means the partial unique index on
+      // (user, trainAvailability, classInfo, travelDate, status:'Pending')
+      // caught a genuine race — another request for this same booking beat
+      // us to it by milliseconds. Hand back that winning booking instead of
+      // erroring, so a double-click never surfaces as a failed booking.
+      if (error.code === 11000) {
+        const existing = await Booking.findOne({
+          user: req.user._id,
+          trainAvailability: trainAvailability._id,
+          classInfo,
+          travelDate: new Date(travelDate),
+          status: 'Pending'
+        }).sort({ createdAt: -1 });
+
+        if (existing) {
+          return res.status(201).json({
+            success: true,
+            booking: existing._id,
+            totalAmount: existing.paymentDetails.total.toFixed(2),
+            pnr: existing.pnr,
+            duplicate: true,
+            message: 'Booking already reserved — resuming existing booking'
+          });
+        }
+      }
+
       throw error;
     }
 
@@ -409,7 +467,10 @@ exports.createBooking = async (req, res) => {
       executionTime: roundRobinExecutionTime
     };
 
-    booking.status = 'Confirmed';
+    // Seats are held (status stays 'Pending') but the booking is not
+    // 'Confirmed' until payment actually succeeds via updateBookingPayment.
+    // Marking it Confirmed here meant every abandoned/duplicate checkout
+    // attempt showed up as a real, paid-looking reservation forever.
     await booking.save();
 
     // Send confirmation email
@@ -417,7 +478,7 @@ exports.createBooking = async (req, res) => {
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; color: white;">
-            <h1 style="margin: 0; font-size: 24px;">🚂 Train Reservation Confirmed</h1>
+            <h1 style="margin: 0; font-size: 24px;">🚂 Seats Reserved — Payment Pending</h1>
             <p style="margin: 10px 0 0; opacity: 0.9;">PNR: ${pnr}</p>
           </div>
           
@@ -441,9 +502,9 @@ exports.createBooking = async (req, res) => {
               </div>
             `).join('')}
             
-            <div style="margin-top: 30px; padding: 20px; background: #e8f5e9; border-radius: 10px; text-align: center;">
-              <p style="margin: 0; color: #2e7d32; font-weight: bold;">✅ Your booking is confirmed!</p>
-              <p style="margin: 5px 0 0; color: #666;">Please arrive at the station 30 minutes before departure</p>
+            <div style="margin-top: 30px; padding: 20px; background: #fff8e1; border-radius: 10px; text-align: center;">
+              <p style="margin: 0; color: #8a6d00; font-weight: bold;">🕒 Your seats are reserved — complete payment to confirm your ticket</p>
+              <p style="margin: 5px 0 0; color: #666;">This hold will be released if payment is not completed</p>
             </div>
           </div>
           
@@ -456,7 +517,7 @@ exports.createBooking = async (req, res) => {
 
       await sendEmail({
         email: contactInfo.email,
-        subject: `Booking Confirmed - PNR: ${pnr}`,
+        subject: `Seats Reserved, Payment Pending - PNR: ${pnr}`,
         message: emailHtml
       });
       
@@ -496,7 +557,7 @@ exports.createBooking = async (req, res) => {
           }
         },
       },
-      message: 'Booking confirmed — verified by Segment Tree + allocated via Round Robin'
+      message: 'Seats reserved — verified by Segment Tree + allocated via Round Robin. Complete payment to confirm.'
     });
 
   } catch (error) {

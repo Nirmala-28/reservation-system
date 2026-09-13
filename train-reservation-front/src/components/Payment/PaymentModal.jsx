@@ -23,6 +23,9 @@ const PaymentModal = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef(null);
+  // Guards against StrictMode's double-invoked effects (and any
+  // location.state re-render) firing a second PayPal create-order call.
+  const paymentInitializedRef = useRef(false);
 
   // Prevent navigation away from payment page during processing
   useEffect(() => {
@@ -84,7 +87,8 @@ const PaymentModal = () => {
       });
       
       // Initialize payment based on the selected method
-      if (location.state?.paymentMethod) {
+      if (location.state?.paymentMethod && !paymentInitializedRef.current) {
+        paymentInitializedRef.current = true;
         initializePaymentMethod(location.state.paymentMethod, location.state.amount);
       }
     }
@@ -224,35 +228,6 @@ const PaymentModal = () => {
         status: 'failed'
       }));
     }
-  };
-
-  // For handling mock payments in development
-  const handleMockPayment = () => {
-    setPaymentState(prev => ({ ...prev, status: 'processing' }));
-    
-    // Simulate API delay
-    setTimeout(() => {
-      setPaymentState(prev => ({ ...prev, status: 'succeeded' }));
-      
-      // Navigate to confirmation after "success" with replace
-      setTimeout(() => {
-        const mockTransactionId = 'mock_payment_' + Date.now();
-        navigate('/ticket-confirmation', { 
-          state: { 
-            bookingId: bookingDetails.bookingId,
-            paymentId: mockTransactionId,
-            paymentStatus: 'succeeded',
-            transactionId: mockTransactionId,
-            fareBreakdown: bookingDetails.fareBreakdown,
-            pnr: bookingDetails.pnr,
-            selectedTrain: bookingDetails.selectedTrain,
-            selectedFare: bookingDetails.selectedFare,
-            travelers: bookingDetails.travelers
-          },
-          replace: true 
-        });
-      }, 1500);
-    }, 2000);
   };
 
   if (!bookingDetails) {
@@ -557,7 +532,7 @@ const PaymentModal = () => {
             <div className={styles.buttonContainer}>
               <motion.button 
                 className={`${styles.payNowButton} ${hasSucceeded ? styles.successButton : ''}`}
-                onClick={handleMockPayment}
+                onClick={handlePayment}
                 whileHover={{ scale: isProcessing || hasSucceeded ? 1 : 1.02 }}
                 whileTap={{ scale: isProcessing || hasSucceeded ? 1 : 0.98 }}
                 disabled={isProcessing || hasSucceeded}

@@ -164,4 +164,16 @@ const bookingSchema = new mongoose.Schema({
 bookingSchema.index({ pnr: 1 });
 bookingSchema.index({ user: 1, createdAt: -1 });
 
+// Prevents a user from ever holding two unpaid ('Pending') bookings for the
+// same train/class/date at once. A pre-save existence check alone is not
+// atomic — two near-simultaneous requests (double-click, retry) can both
+// pass the check before either commits — so this is enforced at the
+// database level. The constraint only applies while status is 'Pending';
+// once a booking is Confirmed/Cancelled/Waiting it no longer counts,
+// so re-booking after payment or cancellation is unaffected.
+bookingSchema.index(
+  { user: 1, trainAvailability: 1, classInfo: 1, travelDate: 1 },
+  { unique: true, partialFilterExpression: { status: 'Pending' } }
+);
+
 module.exports = mongoose.model('Booking', bookingSchema);
