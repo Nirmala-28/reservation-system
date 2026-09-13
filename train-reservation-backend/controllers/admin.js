@@ -187,21 +187,26 @@ exports.addFareOption = async (req, res) => {
 exports.updateFareOption = async (req, res) => {
   try {
     const { id } = req.params;
-    const { class: classInfo, fareOption } = req.body;
-    
+    // The URL's :class identifies which existing fare option to update.
+    // req.body.fareOption.class carries the (possibly new) class name —
+    // using req.body.class as the lookup key instead broke renaming: the
+    // request would search for a class that doesn't exist yet.
+    const classInfo = req.params.class;
+    const { fareOption } = req.body;
+
     const availability = await TrainAvailability.findById(id);
     if (!availability) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Train availability not found' 
+        message: 'Train availability not found'
       });
     }
 
     const fareIndex = availability.fareOptions.findIndex(f => f.class === classInfo);
     if (fareIndex === -1) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'Fare option not found' 
+        message: 'Fare option not found'
       });
     }
 

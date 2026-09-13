@@ -276,7 +276,10 @@ fareOptions: Array.isArray(prev.fareOptions) ? prev.fareOptions.filter((_, i) =>
 
 const handleFareOptionEdit = (index) => {
 const fareOption = schedule.fareOptions[index];
-setEditingFareOption({ ...fareOption, index });
+// originalClass is kept separate from the (possibly edited) class field
+// below, so the update request can still find the fare option after
+// its class name is changed in the modal.
+setEditingFareOption({ ...fareOption, index, originalClass: fareOption.class });
 setShowFareModal(true);
 };
 
@@ -284,12 +287,13 @@ const handleFareOptionSave = async () => {
   try {
     setLoading(true);
     setError(null);
-    
-    const { index, ...fareOptionData } = editingFareOption;
-    
-    // Update existing fare option
-    const response = await put(`/api/admin/train-availability/${id}/fare-options/${fareOptionData.class}`, {
-      class: fareOptionData.class,
+
+    const { index, originalClass, ...fareOptionData } = editingFareOption;
+
+    // Update existing fare option — the URL's class segment is the
+    // ORIGINAL class name (identifies which record to update), while the
+    // body carries the new values, including a renamed class if changed.
+    const response = await put(`/api/admin/train-availability/${id}/fare-options/${originalClass}`, {
       fareOption: fareOptionData
     });
     
