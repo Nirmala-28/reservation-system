@@ -30,6 +30,9 @@ const [trainsLoaded, setTrainsLoaded] = useState(false); // Add loading state tr
 const [editingFareOption, setEditingFareOption] = useState(null);
 const [showFareModal, setShowFareModal] = useState(false);
 const [dataLoading, setDataLoading] = useState(false); // Loading state for fetching existing data
+const [stopsListInput, setStopsListInput] = useState(
+(existingData?.stopsList || []).join(', ')
+);
 
 // Fetch existing data function
 const fetchExistingData = async () => {
@@ -52,11 +55,13 @@ const fetchExistingData = async () => {
           arrivalStation: data.arrivalStation || '',
           arrivalDate: data.arrivalDate || '',
           duration: data.duration || '',
+          stopsList: Array.isArray(data.stopsList) ? data.stopsList : [],
 
           algorithmType: data.algorithmType || 'RoundRobin',
           timeQuantum: data.timeQuantum || 30,
           fareOptions: Array.isArray(data.fareOptions) ? data.fareOptions : []
         });
+        setStopsListInput(Array.isArray(data.stopsList) ? data.stopsList.join(', ') : '');
         console.log('[ScheduleForm] Data loaded successfully');
 
         // Automatically load real-time availability if departure date is set
@@ -122,13 +127,14 @@ arrivalTime: existingData.arrivalTime || '',
 arrivalStation: existingData.arrivalStation || '',
 arrivalDate: existingData.arrivalDate || '',
 duration: existingData.duration || '',
+stopsList: Array.isArray(existingData.stopsList) ? existingData.stopsList : [],
 
 algorithmType: 'RoundRobin', // Always Round Robin
 timeQuantum: existingData.timeQuantum || 30,
 fareOptions: Array.isArray(existingData.fareOptions) ? existingData.fareOptions : []
 };
 }
- 
+
 
 return {
 trainNumber: preselectedTrain?.trainNumber || '',
@@ -141,6 +147,7 @@ arrivalTime: '',
 arrivalStation: '',
 arrivalDate: '',
 duration: '',
+stopsList: [],
 
 algorithmType: 'RoundRobin', // Always Round Robin
 timeQuantum: 30,
@@ -197,6 +204,15 @@ setSchedule(prev => ({ ...prev, [name]: value === '' ? '' : (parseFloat(value) |
 } else {
 setSchedule(prev => ({ ...prev, [name]: value }));
 }
+};
+
+const handleStopsListChange = (e) => {
+const raw = e.target.value;
+setStopsListInput(raw);
+setSchedule(prev => ({
+...prev,
+stopsList: raw.split(',').map(s => s.trim()).filter(Boolean)
+}));
 };
 
 const handleTrainSelect = (e) => {
@@ -591,6 +607,22 @@ onChange={handleChange}
 required
 placeholder="Mumbai Central"
 />
+</div>
+</div>
+<div className={styles.formRow}>
+<div className={styles.formGroup} style={{ flex: 1 }}>
+<label>Intermediate Stops (optional)</label>
+<input
+type="text"
+value={stopsListInput}
+onChange={handleStopsListChange}
+placeholder="Kathmandu, Bharatpur, Butwal, Pokhara"
+/>
+<small className={styles.helpText}>
+Comma-separated, in order, including the departure and arrival stations. Powers the Segment Tree
+algorithm's partial-route seat sharing — without this, Segment Tree has nothing to check and every
+booking on this schedule just logs a "skipped" result.
+</small>
 </div>
 </div>
 </div>

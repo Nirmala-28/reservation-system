@@ -345,11 +345,15 @@ exports.createBooking = async (req, res) => {
       contactInfo: contactInfo,
       status: isWaitlistBooking ? 'Waiting' : 'Pending',
       algorithmLog: [
-        {
+        // Only record a Segment Tree entry when the check actually ran
+        // (the schedule has a stopsList with 2+ stops). Logging it
+        // unconditionally made every booking show a "Segment Tree" badge
+        // even when it was skipped and never touched the outcome.
+        ...(!isWaitlistBooking && stops.length >= 2 ? [{
           algorithm: 'SegmentTree',
           action: 'seat_check',
           result: segmentTreeResult,
-        },
+        }] : []),
         ...(isWaitlistBooking ? [{
           algorithm: 'PriorityQueue',
           action: 'waitlisted',

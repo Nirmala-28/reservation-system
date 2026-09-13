@@ -201,11 +201,26 @@ exports.searchTrains = async (req, res) => {
 
       const solver = new DijkstraSolver();
       const edgeData = {}; // to store extra info for later hop resolution
+      const displayNames = {}; // normalized station key -> nicely-cased name for output
+
+      // Station names in this data set are inconsistently formatted
+      // ("Phr,Pokhara" vs "Pokhara", "kwt,kawasoti" vs "Kawasoti"), so the
+      // same physical station can appear as different strings across
+      // schedules. Graph nodes are matched on a normalized key (the part
+      // after the last comma, lowercased) so hops actually connect instead
+      // of silently failing to find a path that really exists.
+      const normalizeStation = (raw) => {
+        if (!raw) return '';
+        const parts = raw.split(',');
+        return parts[parts.length - 1].trim().toLowerCase();
+      };
 
       allRoutes.forEach(route => {
-        const from = route.departureStation?.trim();
-        const to   = route.arrivalStation?.trim();
+        const from = normalizeStation(route.departureStation);
+        const to   = normalizeStation(route.arrivalStation);
         if (!from || !to) return;
+        if (!displayNames[from]) displayNames[from] = route.departureStation.split(',').pop().trim();
+        if (!displayNames[to]) displayNames[to] = route.arrivalStation.split(',').pop().trim();
 
         // Parse duration string like "5h 30m" or "320" (minutes) into minutes
         let weight = 60; // default 60 min if unparseable
@@ -238,8 +253,8 @@ exports.searchTrains = async (req, res) => {
       });
 
       // Run Dijkstra
-      const source = departureStation.trim();
-      const target = arrivalStation.trim();
+      const source = normalizeStation(departureStation);
+      const target = normalizeStation(arrivalStation);
       const result = solver.findShortestPath(source, target);
 
       if (result && result.path && result.path.length >= 2) {
@@ -250,8 +265,8 @@ exports.searchTrains = async (req, res) => {
           const hopTo   = result.path[i + 1];
           const edge    = (edgeData[hopFrom] || []).find(e => e.to === hopTo);
           hops.push({
-            from: hopFrom,
-            to: hopTo,
+            from: displayNames[hopFrom] || hopFrom,
+            to: displayNames[hopTo] || hopTo,
             trainNumber: edge?.trainNumber,
             trainName: edge?.trainName,
             departureTime: edge?.departureTime,
@@ -262,19 +277,20 @@ exports.searchTrains = async (req, res) => {
           });
         }
 
+        const displayPath = result.path.map(key => displayNames[key] || key);
         dijkstraResult = {
           found: true,
-          path: result.path,
+          path: displayPath,
           totalDurationMinutes: result.duration,
           hops,
-          message: `Dijkstra optimal route: ${result.path.join(' → ')} (${result.duration} min total)`
+          message: `Dijkstra optimal route: ${displayPath.join(' → ')} (${result.duration} min total)`
         };
 
         console.log(`[Dijkstra] ${dijkstraResult.message}`);
       } else {
         dijkstraResult = {
           found: false,
-          message: `No connecting route found between "${source}" and "${target}" via Dijkstra`
+          message: `No connecting route found between "${departureStation.trim()}" and "${arrivalStation.trim()}" via Dijkstra`
         };
         console.log(`[Dijkstra] ${dijkstraResult.message}`);
       }
