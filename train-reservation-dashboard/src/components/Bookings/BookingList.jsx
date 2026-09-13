@@ -13,41 +13,46 @@ const BookingList = () => {
   const [error, setError] = useState(null);
   const { get } = useApi();
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        console.log('Fetching bookings...');
-        
-        const response = await get('/api/admin/bookings');
-        console.log('Bookings API response:', response);
-        
-        // Handle the response based on the API structure
-        if (response && response.success && Array.isArray(response.data)) {
-          console.log('Setting bookings from response.data:', response.data);
-          setBookings(response.data);
-        } else if (response && Array.isArray(response.data)) {
-          console.log('Setting bookings from response.data (no success flag):', response.data);
-          setBookings(response.data);
-        } else if (Array.isArray(response)) {
-          console.log('Setting bookings from direct response:', response);
-          setBookings(response);
-        } else {
-          console.error('Unexpected response format:', response);
-          setBookings([]);
-          setError('Invalid bookings data format received from server');
-        }
-      } catch (error) {
-        console.error('Failed to fetch bookings:', error);
-        setError(`Failed to load bookings: ${error.message || 'Please try again.'}`);
-        setBookings([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Defined outside the effect (and not memoized with useCallback — `get`
+  // from useApi isn't stable across renders, so depending on it would
+  // re-run this on every render) so the Refresh/Retry buttons can call it
+  // directly instead of doing a full window.location.reload().
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Fetching bookings...');
 
+      const response = await get('/api/admin/bookings');
+      console.log('Bookings API response:', response);
+
+      // Handle the response based on the API structure
+      if (response && response.success && Array.isArray(response.data)) {
+        console.log('Setting bookings from response.data:', response.data);
+        setBookings(response.data);
+      } else if (response && Array.isArray(response.data)) {
+        console.log('Setting bookings from response.data (no success flag):', response.data);
+        setBookings(response.data);
+      } else if (Array.isArray(response)) {
+        console.log('Setting bookings from direct response:', response);
+        setBookings(response);
+      } else {
+        console.error('Unexpected response format:', response);
+        setBookings([]);
+        setError('Invalid bookings data format received from server');
+      }
+    } catch (error) {
+      console.error('Failed to fetch bookings:', error);
+      setError(`Failed to load bookings: ${error.message || 'Please try again.'}`);
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredBookings = Array.isArray(bookings) ? bookings.filter(booking => {
@@ -200,8 +205,8 @@ const BookingList = () => {
         <div style={{ textAlign: 'center', padding: '2rem', color: '#dc3545' }}>
           <h3>Error Loading Bookings</h3>
           <p>{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
+          <button
+            onClick={fetchBookings}
             style={{
               padding: '8px 16px',
               background: '#007bff',
@@ -237,8 +242,8 @@ const BookingList = () => {
           >
             Export CSV
           </button>
-          <button 
-            onClick={() => window.location.reload()}
+          <button
+            onClick={fetchBookings}
             style={{
               padding: '8px 16px',
               background: '#007bff',
